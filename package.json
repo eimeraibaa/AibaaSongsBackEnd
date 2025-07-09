@@ -4,7 +4,6 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "prestart": "npx sequelize-cli db:migrate",
     "start": "node index.js"
   },
   "keywords": [],
