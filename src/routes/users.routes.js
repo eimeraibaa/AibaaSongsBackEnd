@@ -5,8 +5,5 @@ const router = Router()
 
 router.post('/login',loginUser)
 router.post('/register',registerUser)
-//router.put('/users/:id')
-//router.delete('/users/:id')
-
 
 export default router;

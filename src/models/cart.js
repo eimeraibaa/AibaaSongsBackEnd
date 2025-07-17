@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../database/database.js';
 
-export const SongRequest = sequelize.define(
-  'song_requests',
+export const CartItem = sequelize.define(
+  'cart_items',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -11,7 +11,7 @@ export const SongRequest = sequelize.define(
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
         model: 'users',
         key: 'id',
@@ -21,10 +21,6 @@ export const SongRequest = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    email: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
     prompt: {
       type: DataTypes.TEXT,
       allowNull: false,
@@ -33,31 +29,33 @@ export const SongRequest = sequelize.define(
       type: DataTypes.ARRAY(DataTypes.TEXT),
       allowNull: false,
     },
-    status: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      defaultValue: 'pending',
-    },
     previewUrl: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    finalUrl: {
+    status: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: 'draft',
     },
     price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 30.00,
     },
-    timestamp: {
+    createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   },
   {
-    tableName: 'song_requests',
+    tableName: 'cart_items',
     timestamps: false,
   }
-);
+)
