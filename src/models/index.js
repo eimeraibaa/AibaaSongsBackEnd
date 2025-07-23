@@ -4,6 +4,7 @@ import { User }    from './user.model.js';
 import { Payment } from './payment.model.js';
 import { SongRequest } from './songRequest.model.js';
 import { cart } from './cart.model.js';
+import { Order, OrderItem } from './orders.js';
 
 
 // Asignaciones de relaciones
@@ -17,6 +18,17 @@ SongRequest.belongsTo(User, { foreignKey: 'userId' });
 
 User.hasMany(cart,   { foreignKey: 'userId' });
 cart.belongsTo(User, { foreignKey: 'userId' });
+
+// Asociaciones
+User.hasMany(Order, { foreignKey: 'userId' });
+Order.belongsTo(User, { foreignKey: 'userId' });
+
+Order.hasMany(OrderItem, { foreignKey: 'orderId' });
+OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
+
+SongRequest.hasMany(OrderItem, { foreignKey: 'songRequestId' });
+OrderItem.belongsTo(SongRequest, { foreignKey: 'songRequestId' });
+
 
 export { sequelize, User, Payment , SongRequest };
 

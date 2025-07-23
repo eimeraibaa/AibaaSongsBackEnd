@@ -21,10 +21,6 @@ export const SongRequest = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    email: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
     prompt: {
       type: DataTypes.TEXT,
       allowNull: false,

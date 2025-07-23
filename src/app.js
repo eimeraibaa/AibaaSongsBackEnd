@@ -4,6 +4,7 @@ import usersRoutes from './routes/users.routes.js'
 import paymentsRouter from './routes/payment.routes.js';
 import songsRouter from './routes/songs.routes.js';
 import cartRoutes from './routes/cart.routes.js';
+import ordersRoutes from './routes/orders.routes.js';
 import { setupAuth } from './middleware/auth.js';
 import session from 'express-session';
 import SequelizeStoreFactory from 'connect-session-sequelize';
@@ -57,5 +58,6 @@ app.use('/users', usersRoutes)
 app.use('/payment', paymentsRouter)
 app.use('/songs', songsRouter)
 app.use('/cart', cartRoutes)
+app.use('/orders', ordersRoutes)
 
 export default app;

@@ -54,3 +54,11 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
+
+export const getAuthenticatedUser = (req, res) => {
+  if (req.user) {
+    res.json(req.user);
+  } else {
+    res.status(401).json({ message: 'No autenticado' });
+  }
+};

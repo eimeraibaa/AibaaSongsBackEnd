@@ -89,6 +89,30 @@ export const cartItems = pgTable('cart_items', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+// Nueva tabla para órdenes de pago (historial de compras)
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default('completed'), // completed, refunded, failed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+// Nueva tabla para items de órdenes (canciones específicas pagadas)
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id).notNull(),
+  songRequestId: integer("song_request_id").references(() => songRequests.id),
+  dedicatedTo: text("dedicated_to"),
+  prompt: text("prompt").notNull(),
+  genres: text("genres").array().notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default('processing'), // processing, completed, delivered
+  previewUrl: text("preview_url"),
+  finalUrl: text("final_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Validation schemas
 export const insertUserSchema = createInsertSchema(users)
   .pick({ email: true, firstName: true, lastName: true, password: true })
@@ -101,7 +125,21 @@ export const insertUserSchema = createInsertSchema(users)
 export const upsertUserSchema = createInsertSchema(users)
   .pick({ id: true, email: true, firstName: true, lastName: true, profileImageUrl: true, provider: true, providerId: true });
 
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
+  id: true,
+  songRequestId: true,
+  previewUrl: true,
+  finalUrl: true,
+  createdAt: true,
+});
+
+
 export const insertLeadSchema = createInsertSchema(leads).omit({ id: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true });
 export const insertSongRequestSchema = createInsertSchema(songRequests).omit({ id: true, status: true, previewUrl: true, finalUrl: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true, status: true, previewUrl: true, createdAt: true, updatedAt: true });
+

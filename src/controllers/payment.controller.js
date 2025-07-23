@@ -23,6 +23,7 @@ export const createPaymentIntent = async (req, res) => {
       automatic_payment_methods: { enabled: true },
       metadata: {
         purpose: 'song_creation',
+        ...(metadata || {})
         // userId: req.user?.id  // si manejas autenticación
       }
     });

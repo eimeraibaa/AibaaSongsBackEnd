@@ -13,3 +13,4 @@ User.prototype.toSafeObject = function() {
   const { password, ...safeUser } = this.toJSON();
   return safeUser;
 };
+
