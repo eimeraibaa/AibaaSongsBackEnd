@@ -32,6 +32,7 @@ export const createOrderItem = async (req, res) => {
 
 export const getUserOrders = async (req, res) => {
   try {
+    console.log('Fetching orders for user:', req.user.id);
     const userId = req.user.id;
     const orders = await storage.getUserOrders(userId);
     res.json({ success: true, orders });
@@ -41,16 +42,62 @@ export const getUserOrders = async (req, res) => {
   }
 };
 
+// src/controllers/songRequests.controller.js
+
+// src/controllers/orders.controller.js
 export const checkSongPayment = async (req, res) => {
   try {
-    const { userId, prompt } = req.body;
-    if (req.user.id !== userId) {
-      return res.status(403).json({ success: false, message: 'No autorizado' });
-    }
-    const existing = await storage.checkIfSongAlreadyPaid(userId, prompt);
-    res.json({ success: true, alreadyPaid: !!existing, orderItem: existing || null });
+    
+    const { songs } = req.body;
+    const userId = req.user.claims.sub;// ahora recibimos { userId, songs: [{ prompt: string }, ...] }
+
+    // seguridad
+    // if (req.user.id !== userId) {
+    //   return res.status(403).json({ success: false, message: 'No autorizado' });
+    // }
+
+    // por cada prompt comprobamos si ya existe pago
+      const songStatuses = await Promise.all(
+        songs.map(async song => {
+          const existingPayment = await storage.checkIfSongAlreadyPaid(userId, song.prompt);
+          return {
+            prompt: song.prompt,
+            isPaid: !!existingPayment,
+            orderItem: existingPayment
+          };
+        })
+      );
+
+    return res.json({ success: true, songStatuses });
   } catch (error) {
     console.error('Error checking song payment:', error);
-    res.status(500).json({ success: false, message: 'Error checking payment: ' + error.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Error checking payment: ' + error.message
+    });
   }
 };
+
+// src/controllers/orders.controller.js
+export const updateOrderItemStatus = async (req, res) => {
+  try {
+    const orderItemId = parseInt(req.params.id, 10);
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ success: false, message: 'Status is required' });
+    }
+
+    const updatedItem = await storage.updateOrderItemStatus(orderItemId, status);
+    if (!updatedItem) {
+      return res.status(404).json({ success: false, message: 'Order item not found' });
+    }
+
+    res.json({ success: true, orderItem: updatedItem });
+  } catch (err) {
+    console.error('Error updating order item status:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
+

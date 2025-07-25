@@ -65,7 +65,6 @@ export const songRequests = pgTable('song_requests', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').references(() => users.id),
   dedicatedTo: text('dedicated_to'),
-  email: text('email').notNull(),
   prompt: text('prompt').notNull(),
   genres: text('genres').array().notNull(),
   status: text('status').notNull().default('pending'),

@@ -93,6 +93,23 @@ export const removeFromCart = async (req, res) => {
   }
 };
 
+  export const clearCart =  async (req, res) => {
+    try {
+      await storage.clearCart(req.user.id);
+      
+      res.json({ 
+        success: true, 
+        message: "Carrito vaciado exitosamente" 
+      });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error vaciando el carrito" 
+      });
+    }
+  };
+
 // POST /api/cart/checkout
 export const checkoutCart = async (req, res) => {
   try {

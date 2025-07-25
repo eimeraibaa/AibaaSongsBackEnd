@@ -3,7 +3,7 @@ import fetch from 'node-fetch'; // si usas node-fetch para webhooks
 import { User }        from '../models/users.js';
 import { SongRequest } from '../models/songs.js';
 import { CartItem }    from '../models/cart.js';
-import { Order, OrderItem } from '../models/orders.js';
+import { Order, OrderItem } from '../models/index.js';
 // import { Lead }        from '../models/leads.js';
 // import { ChatMessage } from '../models/chatMessages.js';
 
@@ -48,8 +48,8 @@ export class DatabaseStorage {
   // }
 
   // ==== Song Requests ====================================================
-  async createSongRequest({ userId, dedicatedTo, email, prompt, genres, timestamp }) {
-    return SongRequest.create({ userId: userId || null, dedicatedTo, email, prompt, genres, status: 'pending', timestamp });
+  async createSongRequest({ userId, dedicatedTo, prompt, genres, timestamp }) {
+    return SongRequest.create({ userId: userId || null, dedicatedTo, prompt, genres, status: 'pending', timestamp });
   }
 
   async getSongRequests() {
@@ -100,7 +100,8 @@ export class DatabaseStorage {
   }
 
   async getUserOrders(userId) {
-    return Order.findAll({ where: { userId }, order: [['createdAt', 'DESC']], include: [OrderItem] });
+    return Order.findAll({where: { userId },order: [['createdAt', 'DESC']],include: [{ model: OrderItem, as: 'items' }]
+});
   }
 
   async getOrderById(orderId) {
@@ -111,8 +112,15 @@ export class DatabaseStorage {
     return Order.findOne({ where: { stripePaymentIntentId: paymentIntentId }, include: [OrderItem] });
   }
 
+  async updateOrderStatus(orderId , status) {
+    return Order.update({ status }, { where: { id: orderId } });
+  }
+
   async updateOrderItemStatus(orderItemId, status) {
-    return OrderItem.update({ status }, { where: { id: orderItemId } });
+    await OrderItem.update({ status }, { where: { id: orderItemId } });
+
+    const updated = await OrderItem.findByPk(orderItemId);
+    return updated; // o null si no existía
   }
 
   async checkIfSongAlreadyPaid(userId, prompt) {

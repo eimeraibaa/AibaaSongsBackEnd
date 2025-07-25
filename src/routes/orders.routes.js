@@ -6,13 +6,15 @@ import {
   createOrderItem,
   getUserOrders,
   checkSongPayment,
+  updateOrderItemStatus
 } from '../controllers/orders.controller.js';
 
 const router = Router()
 
-router.post('/api/orders', isAuthenticated, createOrder);
-router.post('/api/order-items', isAuthenticated, createOrderItem);
-router.get('/api/orders/user', isAuthenticated, getUserOrders);
-router.post('/api/check-song-payment', isAuthenticated, checkSongPayment);
+router.post('/createOrder', isAuthenticated, createOrder);
+router.post('/createOrderItem', isAuthenticated, createOrderItem);
+router.get('/getUserOrders', isAuthenticated, getUserOrders);
+router.post('/checkSongPayment', isAuthenticated, checkSongPayment);
+router.patch('/updateOrderItemStatus/:id', isAuthenticated, updateOrderItemStatus)
 
 export default router;

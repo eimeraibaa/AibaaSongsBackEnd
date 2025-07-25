@@ -38,14 +38,28 @@ sessionStore.sync();
 app.use(cors({
   origin: true,          // lee el Origin de la petición y lo responde
   credentials: true, // Permite cookies y headers de autorización
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
+  optionsSuccessStatus: 200
 }));
 
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    // automáticamente responde con los headers CORS que ya ha puesto `cors()`
+    return res.sendStatus(200)
+  }
+  next()
+})
 
 app.use(express.json()) // Middleware to parse JSON bodies
 // después de todas tus rutas, justo antes de app.listen(...)
 setupAuth(app);
+
+app.use('/users', usersRoutes)
+app.use('/payment', paymentsRouter)
+app.use('/songs', songsRouter)
+app.use('/cart', cartRoutes)
+app.use('/orders', ordersRoutes)
 
 app.use((err, req, res, next) => {
   console.error('Error global capturado:', err);
@@ -53,11 +67,5 @@ app.use((err, req, res, next) => {
     message: err.message || 'Error interno del servidor'
   });
 });
-
-app.use('/users', usersRoutes)
-app.use('/payment', paymentsRouter)
-app.use('/songs', songsRouter)
-app.use('/cart', cartRoutes)
-app.use('/orders', ordersRoutes)
 
 export default app;
