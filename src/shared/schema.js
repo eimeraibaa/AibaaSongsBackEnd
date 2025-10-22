@@ -108,6 +108,7 @@ export const orderItems = pgTable("order_items", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default('processing'), // processing, completed, delivered
   previewUrl: text("preview_url"),
+  lyrics: text("lyrics"), // Campo para letras preview
   finalUrl: text("final_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

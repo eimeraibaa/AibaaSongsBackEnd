@@ -5,6 +5,7 @@ import paymentsRouter from './routes/payment.routes.js';
 import songsRouter from './routes/songs.routes.js';
 import cartRoutes from './routes/cart.routes.js';
 import ordersRoutes from './routes/orders.routes.js';
+import songRouter from './routes/song.routes.js';
 import { setupAuth } from './middleware/auth.js';
 import session from 'express-session';
 import SequelizeStoreFactory from 'connect-session-sequelize';
@@ -60,6 +61,7 @@ app.use('/payment', paymentsRouter)
 app.use('/songs', songsRouter)
 app.use('/cart', cartRoutes)
 app.use('/orders', ordersRoutes)
+app.use('/song', songRouter)
 
 app.use((err, req, res, next) => {
   console.error('Error global capturado:', err);

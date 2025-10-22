@@ -38,6 +38,10 @@ export const CartItem = sequelize.define(
       allowNull: false,
       defaultValue: 'draft',
     },
+    lyrics: {
+    type: DataTypes.TEXT,
+    allowNull: true, // processing, completed, delivered
+    },
     price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,

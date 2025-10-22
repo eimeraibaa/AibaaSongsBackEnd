@@ -57,16 +57,26 @@ export const getCart = async (req, res) => {
 export const generatePreview = async (req, res) => {
   try {
     const cartItemId = parseInt(req.params.id, 10);
-    const previewUrl = await storage.generatePreview(cartItemId);
+    
+    if (isNaN(cartItemId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de item inválido',
+      });
+    }
+
+    // Generar letras para el cart item
+    const updatedCartItem = await storage.generateLyricsForCartItem(cartItemId);
 
     return res.json({
       success: true,
-      previewUrl,
-      message: 'Preview generado exitosamente',
+      lyrics: updatedCartItem.lyrics,
+      cartItem: updatedCartItem,
+      message: 'Letras generadas exitosamente',
     });
   } catch (error) {
     console.error('Error generating preview:', error);
-    const message = error instanceof Error ? error.message : 'Error generando preview';
+    const message = error instanceof Error ? error.message : 'Error generando letras';
     return res.status(500).json({
       success: false,
       message,
@@ -151,3 +161,4 @@ export const checkoutCart = async (req, res) => {
     });
   }
 };
+

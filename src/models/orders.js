@@ -86,6 +86,10 @@ export const OrderItem = sequelize.define('OrderItem', {
     allowNull: false,
     defaultValue: 'processing', // processing, completed, delivered
   },
+    lyrics: {
+    type: DataTypes.STRING,
+    allowNull: true, // processing, completed, delivered
+  },
   previewUrl: {
     type: DataTypes.TEXT,
     allowNull: true,
