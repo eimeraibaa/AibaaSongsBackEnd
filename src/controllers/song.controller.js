@@ -5,7 +5,6 @@ import { storage } from '../services/storage.js';
 const sunoService = new SunoService();
 
 export const generateSongsFromOrder = async (req, res) => {
-  debugger;
   try {
     const { orderId } = req.params;
     

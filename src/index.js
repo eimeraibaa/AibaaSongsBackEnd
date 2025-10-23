@@ -7,7 +7,11 @@ const port = 3000;
 
 async function main() {
   try {
-    await sequelize.sync({ force: true }); // Use force: true to drop and recreate tables   
+    // IMPORTANTE: force: false para NO borrar datos en producción
+    // Solo usar force: true en desarrollo inicial para recrear schemas
+    await sequelize.sync({ force: false, alter: false });
+    console.log("✅ Base de datos sincronizada");
+
     app.listen(port, () => {
       console.log("API escuchando en el puerto", port);
     });
