@@ -1,13 +1,11 @@
 import bcrypt from "bcryptjs";
-import fetch from "node-fetch"; // si usas node-fetch para webhooks
+import fetch from "node-fetch";
 import { User } from "../models/users.js";
 import { SongRequest } from "../models/songs.js";
 import { CartItem } from "../models/cart.js";
 import { Order, OrderItem } from "../models/index.js";
 import { generateLyrics } from "./lyricsService.js";
 import { Song } from "../models/song.js";
-// import { Lead }        from '../models/leads.js';
-// import { ChatMessage } from '../models/chatMessages.js';
 
 export class DatabaseStorage {
   // ==== Usuarios y Auth =================================================
@@ -30,24 +28,6 @@ export class DatabaseStorage {
     const match = await bcrypt.compare(plainPassword, user.password);
     return match ? user : null;
   }
-
-  // ==== Leads ============================================================
-  // async createLead({ name, email, message, action, source, pageSection, timestamp }) {
-  //   return Lead.create({ name, email, message, action, source, pageSection, timestamp });
-  // }
-
-  // async getLeads() {
-  //   return Lead.findAll();
-  // }
-
-  // ==== Chat Messages ====================================================
-  // async createChatMessage({ message, response, timestamp }) {
-  //   return ChatMessage.create({ message, response, timestamp });
-  // }
-
-  // async getChatMessages() {
-  //   return ChatMessage.findAll();
-  // }
 
   // ==== Song Requests ====================================================
   async createSongRequest({ userId, dedicatedTo, prompt, genres, timestamp }) {
@@ -278,7 +258,7 @@ export class DatabaseStorage {
         imageUrl: songData.imageUrl,
         sunoSongId: songData.sunoSongId,
         genre: songData.genre,
-        status: "completed",
+        status: "generating", // Inicialmente en estado de generación
         createdAt: new Date(),
       });
 

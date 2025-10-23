@@ -6,6 +6,7 @@ import songsRouter from './routes/songs.routes.js';
 import cartRoutes from './routes/cart.routes.js';
 import ordersRoutes from './routes/orders.routes.js';
 import songRouter from './routes/song.routes.js';
+import webhookRoutes from './routes/webhook.routes.js';
 import { setupAuth } from './middleware/auth.js';
 import session from 'express-session';
 import SequelizeStoreFactory from 'connect-session-sequelize';
@@ -52,10 +53,17 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use(express.json()) // Middleware to parse JSON bodies
-// después de todas tus rutas, justo antes de app.listen(...)
+// IMPORTANTE: Webhook de Stripe debe ir ANTES de express.json()
+// porque necesita el body como raw bytes para verificar la firma
+app.use('/webhook', express.raw({ type: 'application/json' }), webhookRoutes);
+
+// Middleware to parse JSON bodies para el resto de rutas
+app.use(express.json());
+
+// Configurar autenticación con Passport
 setupAuth(app);
 
+// Rutas de la aplicación
 app.use('/users', usersRoutes)
 app.use('/payment', paymentsRouter)
 app.use('/songs', songsRouter)

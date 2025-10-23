@@ -47,14 +47,9 @@ export const getUserOrders = async (req, res) => {
 // src/controllers/orders.controller.js
 export const checkSongPayment = async (req, res) => {
   try {
-    
-    const { songs } = req.body;
-    const userId = req.user.claims.sub;// ahora recibimos { userId, songs: [{ prompt: string }, ...] }
 
-    // seguridad
-    // if (req.user.id !== userId) {
-    //   return res.status(403).json({ success: false, message: 'No autorizado' });
-    // }
+    const { songs } = req.body;
+    const userId = req.user.id; // Passport.js usa req.user.id directamente
 
     // por cada prompt comprobamos si ya existe pago
       const songStatuses = await Promise.all(
