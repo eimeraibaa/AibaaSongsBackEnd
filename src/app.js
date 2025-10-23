@@ -37,6 +37,9 @@ app.use(session({
 
 sessionStore.sync();
 
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ limit: "2mb", extended: true }));
+
 app.use(cors({
   origin: true,          // lee el Origin de la petición y lo responde
   credentials: true, // Permite cookies y headers de autorización

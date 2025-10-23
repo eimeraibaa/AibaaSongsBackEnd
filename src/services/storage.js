@@ -142,6 +142,7 @@ export class DatabaseStorage {
     price,
     status = "processing",
     previewUrl = null,
+    lyrics,
     finalUrl = null,
     createdAt = new Date(),
   }) {
@@ -154,6 +155,7 @@ export class DatabaseStorage {
       price,
       status,
       previewUrl,
+      lyrics,
       finalUrl,
       createdAt,
     });
@@ -281,10 +283,6 @@ export class DatabaseStorage {
       throw error;
     }
   }
-
-  // Agregar este método a tu clase DatabaseStorage
-
-  // Agregar este método a tu clase DatabaseStorage (versión simplificada)
 
   async getOrderItemsWithLyrics(orderId) {
     try {

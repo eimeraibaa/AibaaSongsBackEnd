@@ -25,6 +25,10 @@ export class SunoService {
           style: style,
           title: title,
           make_instrumental: false,
+          model: 'V3_5',
+          customMode: false,
+          instrumental: false,
+          callBackUrl:'',
           wait_audio: false // Importante: no esperar el audio inmediatamente
         }),
       });

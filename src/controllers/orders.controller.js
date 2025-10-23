@@ -23,7 +23,7 @@ export const createOrder = async (req, res) => {
 export const createOrderItem = async (req, res) => {
   try {
     const orderItem = await storage.createOrderItem(req.body);
-    res.json({ success: true, orderItem });
+    res.json({ success: true, item : orderItem });
   } catch (error) {
     console.error('Error creating order item:', error);
     res.status(500).json({ success: false, message: 'Error creating order item: ' + error.message });

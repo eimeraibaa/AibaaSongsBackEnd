@@ -11,6 +11,8 @@ export const generateSongsFromOrder = async (req, res) => {
     // 1. Obtener order items con letras
     const orderItems = await storage.getOrderItemsWithLyrics(orderId);
     
+    console.log(`Iniciando generación de canciones para order ${orderId}, items:`, orderItems);
+
     if (orderItems.length === 0) {
       return res.status(404).json({
         success: false,

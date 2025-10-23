@@ -31,7 +31,7 @@ export function getSession() {
     cookie: {
       maxAge: sessionTtl,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'development'
     }
   });
 }
@@ -73,7 +73,7 @@ export function setupAuth(app) {
 // Middleware to protect routes
 export function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
-  res.status(401).json({ message: "No autenticado" });
+  res.status(401).json({ message: "No autenticado auth" });
 }
 
 // Send welcome email via external webhook
