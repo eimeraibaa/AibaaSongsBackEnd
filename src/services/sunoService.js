@@ -97,6 +97,44 @@ export class SunoService {
       console.log('🎵 SUNO API RESPONSE COMPLETA:');
       console.log(JSON.stringify(data, null, 2));
       console.log('========================================');
+
+      // Verificar si es un error de la API
+      if (data.code && data.code !== 200 && data.msg) {
+        console.error('========================================');
+        console.error('❌ ERROR DE LA API DE SUNO');
+        console.error('========================================');
+        console.error('Código:', data.code);
+        console.error('Mensaje:', data.msg);
+        console.error('========================================');
+
+        // Error específico de callbackUrl
+        if (data.msg.includes('callBackUrl') || data.msg.includes('callback')) {
+          console.error('');
+          console.error('⚠️ LA API DE SUNO REQUIERE UN CALLBACK URL PÚBLICO');
+          console.error('');
+          console.error('Actualmente: callbackUrl =', callbackUrl || '(vacío)');
+          console.error('');
+          console.error('🔧 SOLUCIONES:');
+          console.error('');
+          console.error('1. OPCIÓN RÁPIDA (Testing con ngrok):');
+          console.error('   - Instala ngrok: npm install -g ngrok');
+          console.error('   - Ejecuta: ngrok http 3000');
+          console.error('   - Copia el URL (ej: https://abcd1234.ngrok.io)');
+          console.error('   - Agrega a .env: SUNO_CALLBACK_URL=https://abcd1234.ngrok.io/webhook/suno');
+          console.error('   - Reinicia el servidor');
+          console.error('');
+          console.error('2. OPCIÓN PRODUCCIÓN:');
+          console.error('   - Despliega tu backend en Railway/Render/Heroku');
+          console.error('   - Configura: SUNO_CALLBACK_URL=https://tu-dominio.com/webhook/suno');
+          console.error('');
+          console.error('📚 Ver guía completa en: SOLUCION_CALLBACK_URL.md');
+          console.error('========================================');
+          throw new Error('La API de Suno requiere un callbackUrl público. Ver logs arriba para soluciones.');
+        }
+
+        throw new Error(`Error de Suno API (${data.code}): ${data.msg}`);
+      }
+
       console.log('🔍 Análisis de la respuesta:');
       console.log('  - Tipo:', typeof data);
       console.log('  - Es array?:', Array.isArray(data));
@@ -105,6 +143,8 @@ export class SunoService {
       console.log('  - data.ids:', data.ids);
       console.log('  - data.id:', data.id);
       console.log('  - data.clips:', data.clips);
+      console.log('  - data.code:', data.code);
+      console.log('  - data.msg:', data.msg);
       console.log('========================================');
 
       // Intentar extraer IDs de diferentes formatos posibles
