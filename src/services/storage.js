@@ -122,6 +122,7 @@ export class DatabaseStorage {
     stripePaymentIntentId,
     totalAmount,
     status = "completed",
+    userEmail = null,
     createdAt = new Date(),
   }) {
     return Order.create({
@@ -129,6 +130,7 @@ export class DatabaseStorage {
       stripePaymentIntentId,
       totalAmount,
       status,
+      userEmail,
       createdAt,
     });
   }
@@ -280,6 +282,118 @@ export class DatabaseStorage {
       return await Song.findByPk(songId);
     } catch (error) {
       console.error("Error actualizando canción:", error);
+      throw error;
+    }
+  }
+
+  async getSongById(songId) {
+    try {
+      const song = await Song.findByPk(songId, {
+        include: [
+          {
+            model: OrderItem,
+            as: 'OrderItem',
+            include: [
+              {
+                model: Order,
+                as: 'Order',
+                attributes: ['id', 'userId', 'totalAmount', 'status', 'createdAt']
+              }
+            ]
+          }
+        ]
+      });
+
+      return song;
+    } catch (error) {
+      console.error("Error obteniendo canción por ID:", error);
+      throw error;
+    }
+  }
+
+  async getUserSongs(userId) {
+    try {
+      // Obtener todas las canciones del usuario a través de las órdenes
+      const songs = await Song.findAll({
+        include: [
+          {
+            model: OrderItem,
+            as: 'OrderItem',
+            required: true,
+            include: [
+              {
+                model: Order,
+                as: 'Order',
+                where: { userId },
+                attributes: ['id', 'userId', 'totalAmount', 'status', 'createdAt']
+              }
+            ]
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+
+      return songs;
+    } catch (error) {
+      console.error("Error obteniendo canciones del usuario:", error);
+      throw error;
+    }
+  }
+
+  async getOrderSongs(orderId) {
+    try {
+      // Obtener todas las canciones de una orden específica
+      const songs = await Song.findAll({
+        include: [
+          {
+            model: OrderItem,
+            as: 'OrderItem',
+            where: { orderId },
+            required: true
+          }
+        ],
+        order: [['createdAt', 'ASC']]
+      });
+
+      return songs;
+    } catch (error) {
+      console.error("Error obteniendo canciones de la orden:", error);
+      throw error;
+    }
+  }
+
+  async getSongBySunoId(sunoSongId) {
+    try {
+      const song = await Song.findOne({
+        where: { sunoSongId }
+      });
+
+      return song;
+    } catch (error) {
+      console.error("Error obteniendo canción por Suno ID:", error);
+      throw error;
+    }
+  }
+
+  async updateSongImage(songId, imageUrl) {
+    try {
+      await Song.update(
+        { imageUrl },
+        { where: { id: songId } }
+      );
+
+      return await Song.findByPk(songId);
+    } catch (error) {
+      console.error("Error actualizando imagen de canción:", error);
+      throw error;
+    }
+  }
+
+  async getOrderItemById(orderItemId) {
+    try {
+      return await OrderItem.findByPk(orderItemId);
+    } catch (error) {
+      console.error("Error obteniendo order item por ID:", error);
       throw error;
     }
   }

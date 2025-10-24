@@ -32,6 +32,10 @@ export const Order = sequelize.define('Order', {
     allowNull: false,
     defaultValue: 'completed', // completed, refunded, failed
   },
+  userEmail: {
+    type: DataTypes.STRING,
+    allowNull: true, // Opcional para mantener compatibilidad con órdenes antiguas
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,
