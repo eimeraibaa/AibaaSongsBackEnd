@@ -74,9 +74,9 @@ export class SunoService {
             title: title,
             make_instrumental: false,
             model: 'V3_5',
-            customMode: false,
+            customMode: true,
             instrumental: false,
-            callBackUrl: callbackUrl, // Ahora acepta callbackUrl como parámetro
+            callBackUrl: process.env.SUNO_CALLBACK_URL, // Ahora acepta callbackUrl como parámetro
             wait_audio: false // Importante: no esperar el audio inmediatamente
           }),
         });
