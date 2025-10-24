@@ -149,6 +149,35 @@ export class SunoService {
 
       // Intentar extraer IDs de diferentes formatos posibles
       let songIds = [];
+      let taskId = null;
+
+      // Formato ESPECIAL: data.data.taskId (cuando se usa callbackUrl)
+      // En este caso, Suno NO devuelve IDs inmediatamente
+      // En su lugar devuelve un taskId y enviará webhook cuando esté listo
+      if (data.data && data.data.taskId && typeof data.data.taskId === 'string') {
+        taskId = data.data.taskId;
+        console.log('========================================');
+        console.log('✅ FORMATO CON CALLBACK DETECTADO');
+        console.log('========================================');
+        console.log('TaskId:', taskId);
+        console.log('');
+        console.log('ℹ️ Suno enviará un webhook a tu callbackUrl cuando la canción esté lista.');
+        console.log('ℹ️ No se necesita polling.');
+        console.log('');
+        console.log('📨 Endpoint del webhook:', callbackUrl);
+        console.log('⏳ Tiempo estimado: ~60 segundos');
+        console.log('========================================');
+
+        // Retornar taskId como songId temporal
+        // El webhook actualizará con el ID real de la canción
+        return {
+          success: true,
+          songIds: [taskId], // Usar taskId como identificador temporal
+          taskId: taskId,
+          useWebhook: true, // Flag para indicar que se usa webhook
+          clipIds: []
+        };
+      }
 
       // Formato 1: data.data (array de objetos con id)
       if (data.data && Array.isArray(data.data)) {

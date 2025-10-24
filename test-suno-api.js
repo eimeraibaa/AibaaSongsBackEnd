@@ -124,10 +124,23 @@ async function testSunoAPI() {
     console.log('  - data.status:', data.status);
     console.log('');
 
-    // Intentar extraer IDs
+    // Intentar extraer IDs o taskId
     let songIds = [];
+    let taskId = null;
 
-    if (data.data && Array.isArray(data.data)) {
+    // Formato ESPECIAL: Con callbackUrl, Suno devuelve taskId
+    if (data.data && data.data.taskId) {
+      taskId = data.data.taskId;
+      console.log('========================================');
+      console.log('✅ FORMATO CON CALLBACK DETECTADO');
+      console.log('========================================');
+      console.log('TaskId:', taskId);
+      console.log('');
+      console.log('ℹ️ Esto es CORRECTO cuando usas callbackUrl.');
+      console.log('ℹ️ Suno NO devuelve IDs inmediatamente.');
+      console.log('ℹ️ En su lugar, enviará un webhook cuando la canción esté lista.');
+      console.log('');
+    } else if (data.data && Array.isArray(data.data)) {
       songIds = data.data.map(item => item.id).filter(id => id);
       console.log('✅ IDs encontrados en data.data:', songIds);
     } else if (Array.isArray(data)) {
@@ -143,7 +156,7 @@ async function testSunoAPI() {
       songIds = data.clips.map(clip => clip?.id).filter(id => id);
       console.log('✅ IDs encontrados en data.clips:', songIds);
     } else {
-      console.error('❌ NO SE ENCONTRARON IDs EN LA RESPUESTA');
+      console.error('❌ NO SE ENCONTRARON IDs NI TASKID EN LA RESPUESTA');
       console.error('');
       console.error('Esto significa que el formato de la respuesta no es el esperado.');
       console.error('Por favor, comparte esta salida completa con el equipo de desarrollo.');
@@ -154,8 +167,34 @@ async function testSunoAPI() {
     console.log('💡 RESULTADO:');
     console.log('========================================');
 
-    if (songIds.length > 0) {
-      console.log('✅ LA API FUNCIONA CORRECTAMENTE');
+    if (taskId) {
+      console.log('✅ LA API FUNCIONA CORRECTAMENTE (CON CALLBACK)');
+      console.log('');
+      console.log('TaskId de la tarea:', taskId);
+      console.log('');
+      console.log('📨 FLUJO CON WEBHOOK:');
+      console.log('1. ✅ Suno recibió tu solicitud');
+      console.log('2. ⏳ Suno está generando la canción (~60 segundos)');
+      console.log('3. 📨 Suno enviará webhook a tu callbackUrl cuando esté listo');
+      console.log('4. 🔔 Tu backend recibirá los datos completos (id, audio_url, etc.)');
+      console.log('');
+      console.log('🔍 CÓMO VERIFICAR:');
+      console.log('');
+      console.log('1. Mantén tu servidor corriendo (npm start)');
+      console.log('2. Mantén ngrok corriendo (ngrok http 3000)');
+      console.log('3. Espera ~60 segundos');
+      console.log('4. Verás en los logs del servidor:');
+      console.log('   📨 Webhook de Suno recibido');
+      console.log('   🎵 Procesando canción de Suno: [id]');
+      console.log('   ✅ Canción actualizada con audio URL');
+      console.log('');
+      console.log('⚠️ IMPORTANTE:');
+      console.log('- NO cierres el servidor');
+      console.log('- NO cierres ngrok');
+      console.log('- Espera a ver el webhook en los logs');
+      console.log('');
+    } else if (songIds.length > 0) {
+      console.log('✅ LA API FUNCIONA CORRECTAMENTE (SIN CALLBACK)');
       console.log('');
       console.log('IDs de canciones generadas:', songIds);
       console.log('Total:', songIds.length);
@@ -166,7 +205,7 @@ async function testSunoAPI() {
       console.log('1. Espera ~60 segundos para que Suno genere la canción');
       console.log('2. Consulta el estado en:', `${SUNO_API_BASE}/get?ids=${songIds[0]}`);
     } else {
-      console.log('⚠️ LA API RESPONDIÓ PERO SIN IDs VÁLIDOS');
+      console.log('⚠️ LA API RESPONDIÓ PERO SIN IDs NI TASKID VÁLIDOS');
       console.log('');
       console.log('Esto puede significar:');
       console.log('1. La API cambió su formato de respuesta');
