@@ -304,13 +304,14 @@ export class SunoService {
    * @param {number} maxWaitTime - Tiempo máximo de espera en ms (default: 5 minutos)
    * @returns {Promise<Array>} Array con los datos completos de las canciones
    */
-  async waitForCompletion(songIds, maxWaitTime = 300000) { // 5 minutos max
+  async waitForCompletion(songIds, maxWaitTime = 600000) { // 10 minutos max (aumentado)
     const startTime = Date.now();
     let attempts = 0;
-    const pollInterval = 10000; // 10 segundos
+    const pollInterval = 90000; // 90 segundos (1.5 minutos)
 
     console.log(`⏳ Esperando completitud de ${songIds.length} canción(es)...`);
     console.log(`📊 Tiempo máximo de espera: ${maxWaitTime / 1000} segundos`);
+    console.log(`🔄 Intervalo de polling: ${pollInterval / 1000} segundos`);
 
     while (Date.now() - startTime < maxWaitTime) {
       attempts++;

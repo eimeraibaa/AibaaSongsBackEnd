@@ -221,19 +221,22 @@ async function generateSongsForOrder(orderId) {
           title: item.dedicatedTo || 'Canción Personalizada',
           lyrics: item.lyrics,
           audioUrl: null, // Se actualizará cuando esté listo
-          sunoSongId: sunoResult.songIds[0],
+          sunoSongId: sunoResult.songIds[0], // Puede ser taskId si usa webhook
           genre: item.genres[0] || 'pop',
         });
 
         console.log(`✅ Canción creada con ID: ${song.id}, Suno ID: ${sunoResult.songIds[0]}`);
 
-        // Solo usar polling si NO hay callbackUrl configurado
-        if (!SUNO_CALLBACK_URL) {
+        // Solo usar polling si NO hay callbackUrl configurado Y NO se usa webhook
+        if (!SUNO_CALLBACK_URL && !sunoResult.useWebhook) {
           console.log(`🔄 Iniciando polling para canción ${song.id}...`);
           const completionPromise = waitForSongCompletion(song.id, sunoResult.songIds);
           completionPromises.push(completionPromise);
         } else {
-          console.log(`✅ Canción ${song.id} esperará notificación por webhook`);
+          console.log(`✅ Canción ${song.id} esperará notificación por webhook (no polling)`);
+          if (sunoResult.taskId) {
+            console.log(`📋 TaskId de Suno: ${sunoResult.taskId}`);
+          }
         }
 
       } catch (error) {
@@ -390,11 +393,18 @@ async function handlePaymentFailed(paymentIntent) {
  */
 export const handleSunoWebhook = async (req, res) => {
   try {
-    console.log('📨 Webhook de Suno recibido');
+    console.log('========================================');
+    console.log('📨 WEBHOOK DE SUNO RECIBIDO');
+    console.log('========================================');
+
+    // LOG COMPLETO DEL BODY para debugging
+    console.log('📋 Body completo del webhook:');
+    console.log(JSON.stringify(req.body, null, 2));
+    console.log('========================================');
 
     const { taskId, callbackType, status, data } = req.body;
 
-    console.log('📊 Datos del webhook:', {
+    console.log('📊 Datos extraídos:', {
       taskId,
       callbackType,
       status,
