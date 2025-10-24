@@ -56,9 +56,16 @@ app.use((req, res, next) => {
   next()
 })
 
-// IMPORTANTE: Webhook de Stripe debe ir ANTES de express.json()
-// porque necesita el body como raw bytes para verificar la firma
-app.use('/webhook', express.raw({ type: 'application/json' }), webhookRoutes);
+// IMPORTANTE: Webhook de Stripe debe recibir raw bytes para verificar la firma
+// Webhook de Suno debe recibir JSON parseado
+// Usamos middleware condicional basado en la ruta
+
+// Middleware personalizado para webhooks
+app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
+app.use('/webhook/suno', express.json());
+
+// Aplicar las rutas de webhook
+app.use('/webhook', webhookRoutes);
 
 // Middleware to parse JSON bodies para el resto de rutas
 app.use(express.json());

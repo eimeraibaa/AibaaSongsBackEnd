@@ -6,12 +6,18 @@
 import Stripe from 'stripe';
 import { storage } from '../services/storage.js';
 import { SunoService } from '../services/sunoService.js';
+import { emailService } from '../services/emailService.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2020-08-27',
 });
 
 const sunoService = new SunoService();
+
+// CallbackUrl de Suno (opcional)
+// Si está configurado, Suno enviará notificaciones cuando las canciones estén listas
+// Formato: https://tu-dominio.com/webhook/suno
+const SUNO_CALLBACK_URL = process.env.SUNO_CALLBACK_URL || '';
 
 /**
  * Webhook de Stripe para procesar eventos de pago
@@ -105,7 +111,15 @@ async function handlePaymentSuccess(paymentIntent) {
       return;
     }
 
-    // 2. Crear la orden (Order)
+    // 2. Obtener email del usuario
+    const user = await storage.getUser(parseInt(userId, 10));
+    const userEmail = user?.email || null;
+
+    if (!userEmail) {
+      console.warn('⚠️ No se pudo obtener el email del usuario');
+    }
+
+    // 3. Crear la orden (Order)
     const totalAmount = cartItems.reduce((sum, item) => {
       const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
       return sum + price;
@@ -117,11 +131,12 @@ async function handlePaymentSuccess(paymentIntent) {
       stripePaymentIntentId: paymentIntent.id,
       totalAmount,
       status: 'completed',
+      userEmail,
     });
 
     console.log('✅ Orden creada:', order.id);
 
-    // 3. Crear OrderItems con las letras del cart
+    // 4. Crear OrderItems con las letras del cart
     console.log('📝 Creando order items...');
     const orderItemPromises = cartItems.map(cartItem => {
       return storage.createOrderItem({
@@ -138,11 +153,11 @@ async function handlePaymentSuccess(paymentIntent) {
     const orderItems = await Promise.all(orderItemPromises);
     console.log('✅ Order items creados:', orderItems.length);
 
-    // 4. Limpiar el cart del usuario
+    // 5. Limpiar el cart del usuario
     console.log('🧹 Limpiando cart del usuario...');
     await storage.clearCart(parseInt(userId, 10));
 
-    // 5. Disparar generación de canciones con Suno (asíncrono)
+    // 6. Disparar generación de canciones con Suno (asíncrono)
     console.log('🎵 Iniciando generación de canciones con Suno...');
 
     // Ejecutar en background sin bloquear la respuesta del webhook
@@ -179,17 +194,27 @@ async function generateSongsForOrder(orderId) {
 
     console.log(`📊 ${orderItems.length} items para generar`);
 
+    // Array para rastrear las promesas de completitud
+    const completionPromises = [];
+
     // Generar cada canción
     for (const item of orderItems) {
       try {
         console.log(`🎵 Generando canción para item ${item.id}...`);
 
-        // Llamar a Suno AI
+        // Llamar a Suno AI con callbackUrl si está configurado
         const sunoResult = await sunoService.generateSong(
           item.lyrics,
           item.genres[0] || 'pop',
-          item.dedicatedTo || 'Canción Personalizada'
+          item.dedicatedTo || 'Canción Personalizada',
+          SUNO_CALLBACK_URL // Pasar el callbackUrl
         );
+
+        if (SUNO_CALLBACK_URL) {
+          console.log(`🔗 Generación con callbackUrl: ${SUNO_CALLBACK_URL}`);
+        } else {
+          console.log(`📊 Generación sin callbackUrl, usando polling`);
+        }
 
         // Crear registro de canción
         const song = await storage.createSong(item.id, {
@@ -202,8 +227,14 @@ async function generateSongsForOrder(orderId) {
 
         console.log(`✅ Canción creada con ID: ${song.id}, Suno ID: ${sunoResult.songIds[0]}`);
 
-        // Esperar a que Suno complete la generación (en background)
-        waitForSongCompletion(song.id, sunoResult.songIds);
+        // Solo usar polling si NO hay callbackUrl configurado
+        if (!SUNO_CALLBACK_URL) {
+          console.log(`🔄 Iniciando polling para canción ${song.id}...`);
+          const completionPromise = waitForSongCompletion(song.id, sunoResult.songIds);
+          completionPromises.push(completionPromise);
+        } else {
+          console.log(`✅ Canción ${song.id} esperará notificación por webhook`);
+        }
 
       } catch (error) {
         console.error(`❌ Error generando canción para item ${item.id}:`, error);
@@ -212,6 +243,14 @@ async function generateSongsForOrder(orderId) {
     }
 
     console.log('✅ Proceso de generación iniciado para todos los items');
+
+    // Solo esperar y notificar si estamos usando polling (sin callbackUrl)
+    if (!SUNO_CALLBACK_URL && completionPromises.length > 0) {
+      console.log(`📧 Esperando completitud de ${completionPromises.length} canciones para notificar...`);
+      notifyWhenAllSongsReady(orderId, completionPromises);
+    } else if (SUNO_CALLBACK_URL) {
+      console.log(`✅ Notificación será manejada por webhook de Suno`);
+    }
 
   } catch (error) {
     console.error('❌ Error en generateSongsForOrder:', error);
@@ -222,6 +261,7 @@ async function generateSongsForOrder(orderId) {
 /**
  * Espera a que Suno complete la generación y actualiza la DB
  * Se ejecuta en background para no bloquear
+ * @returns {Promise} Promesa que se resuelve cuando la canción está lista
  */
 async function waitForSongCompletion(songId, sunoSongIds) {
   try {
@@ -239,14 +279,92 @@ async function waitForSongCompletion(songId, sunoSongIds) {
       );
 
       console.log(`✅ Canción ${songId} completada con audio URL`);
+      return { success: true, songId };
     } else {
       console.error(`❌ Canción ${songId} completada sin audio URL`);
       await storage.updateSongStatus(songId, 'failed');
+      return { success: false, songId, error: 'No audio URL' };
     }
 
   } catch (error) {
     console.error(`❌ Error esperando completitud de canción ${songId}:`, error);
     await storage.updateSongStatus(songId, 'failed');
+    return { success: false, songId, error: error.message };
+  }
+}
+
+/**
+ * Notifica al usuario cuando todas las canciones están listas
+ * @param {number} orderId - ID de la orden
+ * @param {Array<Promise>} completionPromises - Array de promesas de completitud
+ */
+async function notifyWhenAllSongsReady(orderId, completionPromises) {
+  try {
+    console.log(`📧 Esperando que todas las canciones de la orden ${orderId} estén listas...`);
+
+    // Esperar a que todas las canciones estén completadas
+    const results = await Promise.allSettled(completionPromises);
+
+    // Contar canciones exitosas y fallidas
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success);
+    const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success));
+
+    console.log(`✅ ${successful.length} canciones completadas, ${failed.length} fallidas`);
+
+    // Obtener la orden con el email
+    const order = await storage.getOrderById(orderId);
+
+    if (!order || !order.userEmail) {
+      console.warn(`⚠️ No se puede enviar email: orden ${orderId} sin email`);
+      return;
+    }
+
+    // Obtener las canciones completadas
+    const songs = await storage.getOrderSongs(orderId);
+    const completedSongs = songs.filter(song => song.status === 'completed');
+
+    if (completedSongs.length === 0) {
+      console.warn(`⚠️ No hay canciones completadas para notificar en orden ${orderId}`);
+
+      // Si hay canciones fallidas, enviar email de error
+      if (failed.length > 0) {
+        const failedSongs = songs
+          .filter(song => song.status === 'failed')
+          .map(song => ({
+            title: song.title,
+            error: 'Error en la generación'
+          }));
+
+        await emailService.sendGenerationFailedEmail(
+          order.userEmail,
+          orderId,
+          failedSongs
+        );
+      }
+
+      return;
+    }
+
+    // Enviar email con las canciones listas
+    console.log(`📧 Enviando email a ${order.userEmail} con ${completedSongs.length} canciones`);
+
+    const emailResult = await emailService.sendSongsReadyEmail(
+      order.userEmail,
+      completedSongs,
+      orderId
+    );
+
+    if (emailResult.success) {
+      console.log(`✅ Email enviado exitosamente a ${order.userEmail}`);
+      if (emailResult.previewUrl) {
+        console.log(`📧 Preview URL: ${emailResult.previewUrl}`);
+      }
+    } else {
+      console.error(`❌ Error enviando email: ${emailResult.error}`);
+    }
+
+  } catch (error) {
+    console.error(`❌ Error notificando usuario de orden ${orderId}:`, error);
   }
 }
 
@@ -262,5 +380,163 @@ async function handlePaymentFailed(paymentIntent) {
 
   } catch (error) {
     console.error('❌ Error procesando pago fallido:', error);
+  }
+}
+
+/**
+ * Webhook de Suno para recibir notificaciones cuando las canciones están listas
+ * Este endpoint se configura en el callbackUrl de Suno
+ * POST /webhook/suno
+ */
+export const handleSunoWebhook = async (req, res) => {
+  try {
+    console.log('📨 Webhook de Suno recibido');
+
+    const { taskId, callbackType, status, data } = req.body;
+
+    console.log('📊 Datos del webhook:', {
+      taskId,
+      callbackType,
+      status,
+      dataLength: data?.length || 0
+    });
+
+    // Verificar que el webhook sea exitoso
+    if (!status || status.code !== 200) {
+      console.error('❌ Webhook de Suno con error:', status);
+      return res.status(200).json({ received: true }); // Responder OK de todas formas
+    }
+
+    // Verificar que haya datos
+    if (!data || data.length === 0) {
+      console.warn('⚠️ Webhook de Suno sin datos');
+      return res.status(200).json({ received: true });
+    }
+
+    // Procesar cada canción en el callback
+    for (const songData of data) {
+      try {
+        const { id: sunoSongId, audio_url, image_url, title, duration, tags } = songData;
+
+        console.log(`🎵 Procesando canción de Suno: ${sunoSongId}`);
+
+        // Buscar la canción en nuestra base de datos por sunoSongId
+        const song = await storage.getSongBySunoId(sunoSongId);
+
+        if (!song) {
+          console.warn(`⚠️ Canción no encontrada en BD: ${sunoSongId}`);
+          continue;
+        }
+
+        // Actualizar la canción con la URL del audio
+        if (audio_url) {
+          await storage.updateSongStatus(song.id, 'completed', audio_url);
+
+          // Actualizar también la imagen si viene
+          if (image_url && song.imageUrl !== image_url) {
+            await storage.updateSongImage(song.id, image_url);
+          }
+
+          console.log(`✅ Canción ${song.id} actualizada con audio URL desde webhook de Suno`);
+
+          // Verificar si todas las canciones de la orden están listas
+          const orderItem = await storage.getOrderItemById(song.orderItemId);
+          if (orderItem) {
+            checkAndNotifyOrderCompletion(orderItem.orderId);
+          }
+        } else {
+          console.warn(`⚠️ Canción ${sunoSongId} sin audio_url`);
+        }
+
+      } catch (error) {
+        console.error('❌ Error procesando canción del webhook:', error);
+        // Continuar con las demás canciones
+      }
+    }
+
+    // Responder a Suno que el webhook fue recibido
+    res.json({ received: true, processed: data.length });
+
+  } catch (error) {
+    console.error('❌ Error procesando webhook de Suno:', error);
+    return res.status(200).json({ received: true }); // Responder OK de todas formas para evitar reintentos
+  }
+};
+
+/**
+ * Verifica si todas las canciones de una orden están listas y envía notificación
+ * @param {number} orderId - ID de la orden
+ */
+async function checkAndNotifyOrderCompletion(orderId) {
+  try {
+    console.log(`🔍 Verificando completitud de orden ${orderId}...`);
+
+    // Obtener todas las canciones de la orden
+    const songs = await storage.getOrderSongs(orderId);
+
+    if (songs.length === 0) {
+      console.warn(`⚠️ No hay canciones para la orden ${orderId}`);
+      return;
+    }
+
+    // Verificar si todas están completadas o fallidas (ninguna en 'generating')
+    const allFinished = songs.every(song =>
+      song.status === 'completed' || song.status === 'failed'
+    );
+
+    if (!allFinished) {
+      console.log(`🔄 Orden ${orderId} aún tiene canciones generándose`);
+      return;
+    }
+
+    const completedSongs = songs.filter(song => song.status === 'completed');
+    const failedSongs = songs.filter(song => song.status === 'failed');
+
+    console.log(`📊 Orden ${orderId}: ${completedSongs.length} completadas, ${failedSongs.length} fallidas`);
+
+    // Obtener la orden con el email
+    const order = await storage.getOrderById(orderId);
+
+    if (!order || !order.userEmail) {
+      console.warn(`⚠️ Orden ${orderId} sin email, no se puede notificar`);
+      return;
+    }
+
+    // Enviar email según el resultado
+    if (completedSongs.length > 0) {
+      console.log(`📧 Enviando email de canciones listas a ${order.userEmail}`);
+
+      const emailResult = await emailService.sendSongsReadyEmail(
+        order.userEmail,
+        completedSongs,
+        orderId
+      );
+
+      if (emailResult.success) {
+        console.log(`✅ Email enviado exitosamente`);
+        if (emailResult.previewUrl) {
+          console.log(`📧 Preview: ${emailResult.previewUrl}`);
+        }
+      } else {
+        console.error(`❌ Error enviando email: ${emailResult.error}`);
+      }
+    }
+
+    // Si hay canciones fallidas, enviar email de error
+    if (failedSongs.length > 0 && completedSongs.length === 0) {
+      console.log(`📧 Enviando email de error a ${order.userEmail}`);
+
+      await emailService.sendGenerationFailedEmail(
+        order.userEmail,
+        orderId,
+        failedSongs.map(song => ({
+          title: song.title,
+          error: 'Error en la generación'
+        }))
+      );
+    }
+
+  } catch (error) {
+    console.error(`❌ Error verificando completitud de orden ${orderId}:`, error);
   }
 }
