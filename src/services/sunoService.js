@@ -92,17 +92,83 @@ export class SunoService {
       // Realizar la petición con reintentos
       const data = await this.retryWithBackoff(generateRequest);
 
-      console.log('🎵 Suno response:', {
-        success: data.success !== false,
-        ids: data.ids || data.id,
-        clips: data.clips?.length || 0
-      });
+      // LOG DETALLADO DE LA RESPUESTA COMPLETA PARA DEBUGGING
+      console.log('========================================');
+      console.log('🎵 SUNO API RESPONSE COMPLETA:');
+      console.log(JSON.stringify(data, null, 2));
+      console.log('========================================');
+      console.log('🔍 Análisis de la respuesta:');
+      console.log('  - Tipo:', typeof data);
+      console.log('  - Es array?:', Array.isArray(data));
+      console.log('  - Keys:', Object.keys(data));
+      console.log('  - data.data:', data.data);
+      console.log('  - data.ids:', data.ids);
+      console.log('  - data.id:', data.id);
+      console.log('  - data.clips:', data.clips);
+      console.log('========================================');
+
+      // Intentar extraer IDs de diferentes formatos posibles
+      let songIds = [];
+
+      // Formato 1: data.data (array de objetos con id)
+      if (data.data && Array.isArray(data.data)) {
+        songIds = data.data.map(item => item.id).filter(id => id);
+        console.log('✅ Formato detectado: data.data (array)');
+        console.log('✅ IDs extraídos:', songIds);
+      }
+      // Formato 2: data es un array directamente
+      else if (Array.isArray(data)) {
+        songIds = data.map(item => item?.id).filter(id => id);
+        console.log('✅ Formato detectado: array directo');
+        console.log('✅ IDs extraídos:', songIds);
+      }
+      // Formato 3: data.ids (array de strings)
+      else if (data.ids && Array.isArray(data.ids)) {
+        songIds = data.ids.filter(id => id);
+        console.log('✅ Formato detectado: data.ids');
+        console.log('✅ IDs extraídos:', songIds);
+      }
+      // Formato 4: data.id (string único)
+      else if (data.id) {
+        songIds = [data.id];
+        console.log('✅ Formato detectado: data.id');
+        console.log('✅ ID extraído:', songIds);
+      }
+      // Formato 5: data.clips (array de objetos)
+      else if (data.clips && Array.isArray(data.clips)) {
+        songIds = data.clips.map(clip => clip?.id).filter(id => id);
+        console.log('✅ Formato detectado: data.clips');
+        console.log('✅ IDs extraídos:', songIds);
+      }
+
+      // Validar que obtuvimos IDs válidos
+      if (!songIds || songIds.length === 0 || songIds.some(id => !id || id === 'undefined')) {
+        console.error('========================================');
+        console.error('❌ ERROR CRÍTICO: No se pudieron extraer IDs válidos');
+        console.error('📋 Respuesta completa de Suno:');
+        console.error(JSON.stringify(data, null, 2));
+        console.error('========================================');
+        console.error('');
+        console.error('🔧 POSIBLES SOLUCIONES:');
+        console.error('1. Verifica que SUNO_API_KEY esté configurada correctamente');
+        console.error('2. Verifica que tengas créditos en tu cuenta de Suno');
+        console.error('3. Revisa la documentación de Suno API: https://docs.sunoapi.org');
+        console.error('4. Prueba llamar a la API directamente con curl para ver el formato real');
+        console.error('');
+        throw new Error('Respuesta de Suno sin IDs válidos. Revisa los logs arriba para más detalles.');
+      }
+
+      console.log('========================================');
+      console.log('✅ Suno response procesada exitosamente:');
+      console.log('  - Total IDs:', songIds.length);
+      console.log('  - IDs:', songIds);
+      console.log('========================================');
 
       // Suno devuelve IDs de las canciones generadas
       return {
         success: true,
-        songIds: data.ids || [data.id], // Array de IDs
-        clipIds: data.clips?.map(clip => clip.id) || []
+        songIds: songIds,
+        clipIds: data.clips?.map(clip => clip?.id).filter(id => id) || data.data?.map(item => item?.id).filter(id => id) || []
       };
 
     } catch (error) {
@@ -119,9 +185,20 @@ export class SunoService {
    */
   async getSongStatus(songIds) {
     try {
+      // Validación estricta de IDs
       if (!songIds || songIds.length === 0) {
         throw new Error('No se proporcionaron IDs de canciones');
       }
+
+      // Validar que todos los IDs sean válidos (no undefined, null o vacíos)
+      const invalidIds = songIds.filter(id => !id || id === 'undefined' || id === 'null');
+      if (invalidIds.length > 0) {
+        console.error('❌ IDs inválidos detectados:', invalidIds);
+        console.error('❌ Todos los IDs:', songIds);
+        throw new Error(`IDs de canciones inválidos: ${JSON.stringify(invalidIds)}. No se puede consultar el estado.`);
+      }
+
+      console.log(`🔍 Consultando estado de ${songIds.length} canción(es):`, songIds);
 
       // Obtener el estado de múltiples canciones con reintentos
       const promises = songIds.map(id => {
