@@ -164,7 +164,7 @@ export class SunoService {
         console.log('ℹ️ Suno enviará un webhook a tu callbackUrl cuando la canción esté lista.');
         console.log('ℹ️ No se necesita polling.');
         console.log('');
-        console.log('📨 Endpoint del webhook:', callbackUrl);
+        console.log('📨 Endpoint del webhook:', process.env.SUNO_CALLBACK_URL);
         console.log('⏳ Tiempo estimado: ~60 segundos');
         console.log('========================================');
 

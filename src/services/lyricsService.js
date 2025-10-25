@@ -14,10 +14,8 @@ Géneros musicales: ${genres.join(', ')}
 ${dedicatedTo ? `Dedicada a: ${dedicatedTo}` : ''}
 
 Por favor genera letras que:
-- Sean emotivas y personales
 - Reflejen el estilo de los géneros mencionados
 - Tengan una estructura de canción completa (verso, coro, verso, coro, puente, coro)
-- Sean apropiadas y positivas
 - Tengan entre 150-300 palabras
 
 Formato la respuesta con las secciones claramente marcadas:

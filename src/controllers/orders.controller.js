@@ -2,7 +2,7 @@ import { storage } from '../services/storage.js';
 
 export const createOrder = async (req, res) => {
   try {
-    const { userId, stripePaymentIntentId, totalAmount, status } = req.body;
+    const { userId, stripePaymentIntentId, totalAmount, status , userEmail } = req.body;
     // Verificar que el usuario autenticado coincida
     if (req.user.id !== userId) {
       return res.status(403).json({ success: false, message: 'No autorizado' });
@@ -11,6 +11,7 @@ export const createOrder = async (req, res) => {
       userId,
       stripePaymentIntentId,
       totalAmount,
+      userEmail,
       status: status || 'completed',
     });
     res.json({ success: true, order });
