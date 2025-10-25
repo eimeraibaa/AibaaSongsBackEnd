@@ -402,29 +402,61 @@ export const handleSunoWebhook = async (req, res) => {
     console.log(JSON.stringify(req.body, null, 2));
     console.log('========================================');
 
-    const { taskId, callbackType, status, data } = req.body;
+    // El formato real del webhook de Suno es:
+    // {
+    //   "code": 200,
+    //   "msg": "...",
+    //   "data": {
+    //     "callbackType": "complete",
+    //     "task_id": "...",
+    //     "data": [...]
+    //   }
+    // }
 
-    console.log('📊 Datos extraídos:', {
-      taskId,
-      callbackType,
-      status,
-      dataLength: data?.length || 0
-    });
+    const webhookCode = req.body.code;
+    const webhookMsg = req.body.msg;
+    const webhookData = req.body.data;
 
     // Verificar que el webhook sea exitoso
-    if (!status || status.code !== 200) {
-      console.error('❌ Webhook de Suno con error:', status);
+    if (!webhookCode || webhookCode !== 200) {
+      console.error('❌ Webhook de Suno con error:', { code: webhookCode, msg: webhookMsg });
       return res.status(200).json({ received: true }); // Responder OK de todas formas
     }
 
     // Verificar que haya datos
-    if (!data || data.length === 0) {
+    if (!webhookData) {
       console.warn('⚠️ Webhook de Suno sin datos');
       return res.status(200).json({ received: true });
     }
 
+    // Extraer los datos internos
+    const { callbackType, task_id: taskId, data: songsData } = webhookData;
+
+    console.log('📊 Datos extraídos:', {
+      taskId,
+      callbackType,
+      webhookCode,
+      webhookMsg,
+      songsDataLength: songsData?.length || 0
+    });
+
+    // Verificar que haya canciones en los datos
+    if (!songsData || songsData.length === 0) {
+      console.warn('⚠️ Webhook de Suno sin canciones en data');
+      return res.status(200).json({ received: true });
+    }
+
+    // Solo procesar si es el webhook final (complete)
+    // Suno envía múltiples webhooks: "text" (sin audio) y "complete" (con audio)
+    if (callbackType !== 'complete') {
+      console.log(`ℹ️ Webhook con callbackType="${callbackType}" - esperando webhook "complete"`);
+      return res.status(200).json({ received: true, waiting: 'complete' });
+    }
+
+    console.log('✅ Webhook "complete" recibido - procesando canciones...');
+
     // Procesar cada canción en el callback
-    for (const songData of data) {
+    for (const songData of songsData) {
       try {
         const { id: sunoSongId, audio_url, image_url, title, duration, tags } = songData;
 
@@ -449,30 +481,34 @@ export const handleSunoWebhook = async (req, res) => {
 
         console.log(`✅ Canción encontrada en BD: ID ${song.id}`);
 
+        // Verificar que haya audio_url (puede estar vacío en webhooks intermedios)
+        if (!audio_url || audio_url.trim() === '') {
+          console.warn(`⚠️ Canción ${sunoSongId} sin audio_url - omitiendo actualización`);
+          continue;
+        }
+
+        console.log(`🎵 Audio URL disponible: ${audio_url}`);
+
         // Actualizar la canción con la URL del audio
-        if (audio_url) {
-          await storage.updateSongStatus(song.id, 'completed', audio_url);
+        await storage.updateSongStatus(song.id, 'completed', audio_url);
 
-          // Actualizar el sunoSongId con el ID real si era un taskId temporal
-          if (song.sunoSongId === taskId && taskId !== sunoSongId) {
-            console.log(`🔄 Actualizando sunoSongId de taskId temporal (${taskId}) a ID real (${sunoSongId})`);
-            await storage.updateSongSunoId(song.id, sunoSongId);
-          }
+        // Actualizar el sunoSongId con el ID real si era un taskId temporal
+        if (song.sunoSongId === taskId && taskId !== sunoSongId) {
+          console.log(`🔄 Actualizando sunoSongId de taskId temporal (${taskId}) a ID real (${sunoSongId})`);
+          await storage.updateSongSunoId(song.id, sunoSongId);
+        }
 
-          // Actualizar también la imagen si viene
-          if (image_url && song.imageUrl !== image_url) {
-            await storage.updateSongImage(song.id, image_url);
-          }
+        // Actualizar también la imagen si viene
+        if (image_url && song.imageUrl !== image_url) {
+          await storage.updateSongImage(song.id, image_url);
+        }
 
-          console.log(`✅ Canción ${song.id} actualizada con audio URL desde webhook de Suno`);
+        console.log(`✅ Canción ${song.id} actualizada con audio URL desde webhook de Suno`);
 
-          // Verificar si todas las canciones de la orden están listas
-          const orderItem = await storage.getOrderItemById(song.orderItemId);
-          if (orderItem) {
-            checkAndNotifyOrderCompletion(orderItem.orderId);
-          }
-        } else {
-          console.warn(`⚠️ Canción ${sunoSongId} sin audio_url`);
+        // Verificar si todas las canciones de la orden están listas
+        const orderItem = await storage.getOrderItemById(song.orderItemId);
+        if (orderItem) {
+          checkAndNotifyOrderCompletion(orderItem.orderId);
         }
 
       } catch (error) {
@@ -483,7 +519,7 @@ export const handleSunoWebhook = async (req, res) => {
     }
 
     // Responder a Suno que el webhook fue recibido
-    res.json({ received: true, processed: data.length });
+    res.json({ received: true, processed: songsData.length });
 
   } catch (error) {
     console.error('❌ Error procesando webhook de Suno:', error);
