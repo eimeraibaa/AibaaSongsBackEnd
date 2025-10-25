@@ -429,18 +429,35 @@ export const handleSunoWebhook = async (req, res) => {
         const { id: sunoSongId, audio_url, image_url, title, duration, tags } = songData;
 
         console.log(`🎵 Procesando canción de Suno: ${sunoSongId}`);
+        console.log(`📋 TaskId del webhook: ${taskId}`);
 
-        // Buscar la canción en nuestra base de datos por sunoSongId
-        const song = await storage.getSongBySunoId(sunoSongId);
+        // Buscar la canción en nuestra base de datos
+        // IMPORTANTE: Cuando se usa webhook, guardamos el taskId temporalmente en sunoSongId
+        // Así que primero intentamos buscar por el taskId
+        let song = await storage.getSongBySunoId(taskId);
+
+        // Si no se encuentra por taskId, intentar buscar por el sunoSongId real
+        if (!song) {
+          console.log(`⚠️ No se encontró canción con taskId: ${taskId}, buscando por sunoSongId: ${sunoSongId}`);
+          song = await storage.getSongBySunoId(sunoSongId);
+        }
 
         if (!song) {
-          console.warn(`⚠️ Canción no encontrada en BD: ${sunoSongId}`);
+          console.warn(`⚠️ Canción no encontrada en BD. TaskId: ${taskId}, SunoSongId: ${sunoSongId}`);
           continue;
         }
+
+        console.log(`✅ Canción encontrada en BD: ID ${song.id}`);
 
         // Actualizar la canción con la URL del audio
         if (audio_url) {
           await storage.updateSongStatus(song.id, 'completed', audio_url);
+
+          // Actualizar el sunoSongId con el ID real si era un taskId temporal
+          if (song.sunoSongId === taskId && taskId !== sunoSongId) {
+            console.log(`🔄 Actualizando sunoSongId de taskId temporal (${taskId}) a ID real (${sunoSongId})`);
+            await storage.updateSongSunoId(song.id, sunoSongId);
+          }
 
           // Actualizar también la imagen si viene
           if (image_url && song.imageUrl !== image_url) {
@@ -460,6 +477,7 @@ export const handleSunoWebhook = async (req, res) => {
 
       } catch (error) {
         console.error('❌ Error procesando canción del webhook:', error);
+        console.error('Stack:', error.stack);
         // Continuar con las demás canciones
       }
     }

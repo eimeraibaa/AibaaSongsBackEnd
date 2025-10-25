@@ -1,6 +1,7 @@
 import { SunoService } from '../services/sunoService.js';
 import { Song } from '../models/song.js';
 import { storage } from '../services/storage.js';
+import { emailService } from '../services/emailService.js';
 import fetch from 'node-fetch';
 
 const sunoService = new SunoService();
@@ -8,10 +9,10 @@ const sunoService = new SunoService();
 export const generateSongsFromOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    
+
     // 1. Obtener order items con letras
     const orderItems = await storage.getOrderItemsWithLyrics(orderId);
-    
+
     console.log(`Iniciando generación de canciones para order ${orderId}, items:`, orderItems);
 
     if (orderItems.length === 0) {
@@ -20,7 +21,11 @@ export const generateSongsFromOrder = async (req, res) => {
         message: 'No se encontraron items para generar'
       });
     }
-    
+
+    // Array para rastrear las promesas de completitud (solo para polling)
+    const completionPromises = [];
+    let useWebhook = false;
+
     const songGenerationPromises = orderItems.map(async (item) => {
       try {
         // 2. Generar canción con Suno para cada item
@@ -29,23 +34,35 @@ export const generateSongsFromOrder = async (req, res) => {
           item.genres[0] || 'pop',
           item.dedicatedTo || 'Canción Personalizada'
         );
-        
+
         // 3. Crear registro de canción (inicialmente sin audio URL)
         const song = await storage.createSong(item.id, {
           title: item.dedicatedTo || 'Canción Personalizada',
           lyrics: item.lyrics,
           audioUrl: null, // Se actualizará cuando esté listo
-          sunoSongId: sunoResult.songIds[0],
+          sunoSongId: sunoResult.songIds[0], // Puede ser taskId si usa webhook
           genre: item.genres[0] || 'pop',
         });
-        
+
+        console.log(`✅ Canción creada con ID: ${song.id}, Suno ID: ${sunoResult.songIds[0]}`);
+
+        // Verificar si este resultado usa webhook
+        if (sunoResult.useWebhook) {
+          useWebhook = true;
+          console.log(`✅ Canción ${song.id} esperará notificación por webhook (no polling)`);
+          if (sunoResult.taskId) {
+            console.log(`📋 TaskId de Suno: ${sunoResult.taskId}`);
+          }
+        }
+
         return {
           orderItemId: item.id,
           songId: song.id,
           sunoSongIds: sunoResult.songIds,
+          useWebhook: sunoResult.useWebhook,
           status: 'generating'
         };
-        
+
       } catch (error) {
         console.error(`Error generando canción para item ${item.id}:`, error);
         return {
@@ -55,20 +72,35 @@ export const generateSongsFromOrder = async (req, res) => {
         };
       }
     });
-    
+
     const results = await Promise.all(songGenerationPromises);
-    
-    // 4. Iniciar proceso en background para verificar completitud
-    setImmediate(() => {
-      checkSongCompletion(results.filter(r => !r.error));
-    });
-    
+
+    // 4. Iniciar proceso en background SOLO si NO se usa webhook
+    const successfulResults = results.filter(r => !r.error);
+
+    if (useWebhook) {
+      console.log('========================================');
+      console.log('✅ Usando WEBHOOK - NO se ejecutará polling');
+      console.log('========================================');
+      console.log('ℹ️ Las canciones se actualizarán automáticamente cuando Suno envíe el webhook');
+      console.log('ℹ️ El correo se enviará automáticamente por el webhook handler');
+      console.log('========================================');
+    } else {
+      console.log('========================================');
+      console.log('🔄 Usando POLLING - iniciando verificación de completitud');
+      console.log('========================================');
+      setImmediate(() => {
+        checkSongCompletion(orderId, successfulResults);
+      });
+    }
+
     return res.json({
       success: true,
       message: 'Generación de canciones iniciada',
       results,
+      useWebhook,
     });
-    
+
   } catch (error) {
     console.error('Error generando canciones:', error);
     return res.status(500).json({
@@ -79,29 +111,116 @@ export const generateSongsFromOrder = async (req, res) => {
 };
 
 // Proceso en background para verificar cuando las canciones estén listas
-async function checkSongCompletion(songResults) {
-  console.log('🔄 Iniciando verificación de canciones...');
+async function checkSongCompletion(orderId, songResults) {
+  console.log('🔄 Iniciando verificación de canciones en modo POLLING...');
 
-  for (const result of songResults) {
-    try {
-      // Esperar a que la canción esté completa
-      const completedSongs = await sunoService.waitForCompletion(result.sunoSongIds);
+  // Array de promesas para esperar completitud de todas las canciones
+  const completionPromises = songResults.map(result =>
+    waitForSongCompletion(result.songId, result.sunoSongIds)
+  );
 
-      // Actualizar con la URL del audio
-      if (completedSongs[0]?.audio_url) {
-        await storage.updateSongStatus(
-          result.songId,
-          'completed',
-          completedSongs[0].audio_url
+  try {
+    console.log(`📧 Esperando que todas las canciones de la orden ${orderId} estén listas...`);
+
+    // Esperar a que todas las canciones estén completadas
+    const results = await Promise.allSettled(completionPromises);
+
+    // Contar canciones exitosas y fallidas
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success);
+    const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success));
+
+    console.log(`✅ ${successful.length} canciones completadas, ${failed.length} fallidas`);
+
+    // Obtener la orden con el email
+    const order = await storage.getOrderById(orderId);
+
+    if (!order || !order.userEmail) {
+      console.warn(`⚠️ No se puede enviar email: orden ${orderId} sin email`);
+      return;
+    }
+
+    // Obtener las canciones completadas
+    const songs = await storage.getOrderSongs(orderId);
+    const completedSongs = songs.filter(song => song.status === 'completed');
+
+    if (completedSongs.length === 0) {
+      console.warn(`⚠️ No hay canciones completadas para notificar en orden ${orderId}`);
+
+      // Si hay canciones fallidas, enviar email de error
+      if (failed.length > 0) {
+        const failedSongs = songs
+          .filter(song => song.status === 'failed')
+          .map(song => ({
+            title: song.title,
+            error: 'Error en la generación'
+          }));
+
+        await emailService.sendGenerationFailedEmail(
+          order.userEmail,
+          orderId,
+          failedSongs
         );
-
-        console.log(`✅ Canción ${result.songId} completada`);
       }
 
-    } catch (error) {
-      console.error(`❌ Error completando canción ${result.songId}:`, error);
-      await storage.updateSongStatus(result.songId, 'failed');
+      return;
     }
+
+    // Enviar email con las canciones listas
+    console.log(`📧 Enviando email a ${order.userEmail} con ${completedSongs.length} canciones`);
+
+    const emailResult = await emailService.sendSongsReadyEmail(
+      order.userEmail,
+      completedSongs,
+      orderId
+    );
+
+    if (emailResult.success) {
+      console.log(`✅ Email enviado exitosamente a ${order.userEmail}`);
+      if (emailResult.previewUrl) {
+        console.log(`📧 Preview URL: ${emailResult.previewUrl}`);
+      }
+    } else {
+      console.error(`❌ Error enviando email: ${emailResult.error}`);
+    }
+
+  } catch (error) {
+    console.error(`❌ Error en checkSongCompletion:`, error);
+  }
+}
+
+/**
+ * Espera a que Suno complete la generación y actualiza la DB
+ * @param {number} songId - ID de la canción en nuestra DB
+ * @param {Array<string>} sunoSongIds - IDs de Suno
+ * @returns {Promise} Promesa que se resuelve cuando la canción está lista
+ */
+async function waitForSongCompletion(songId, sunoSongIds) {
+  try {
+    console.log(`🔄 Esperando completitud de canción ${songId}...`);
+
+    // Esperar a que Suno complete (máximo 10 minutos)
+    const completedSongs = await sunoService.waitForCompletion(sunoSongIds);
+
+    // Actualizar con la URL del audio
+    if (completedSongs[0]?.audio_url) {
+      await storage.updateSongStatus(
+        songId,
+        'completed',
+        completedSongs[0].audio_url
+      );
+
+      console.log(`✅ Canción ${songId} completada con audio URL`);
+      return { success: true, songId };
+    } else {
+      console.error(`❌ Canción ${songId} completada sin audio URL`);
+      await storage.updateSongStatus(songId, 'failed');
+      return { success: false, songId, error: 'No audio URL' };
+    }
+
+  } catch (error) {
+    console.error(`❌ Error esperando completitud de canción ${songId}:`, error);
+    await storage.updateSongStatus(songId, 'failed');
+    return { success: false, songId, error: error.message };
   }
 }
 
