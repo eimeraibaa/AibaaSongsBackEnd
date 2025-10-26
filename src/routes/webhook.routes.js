@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Router } from 'express';
-import { handleStripeWebhook, handleSunoWebhook } from '../controllers/webhook.controller.js';
+import { handleStripeWebhook, handleSunoWebhook, testEmailSend } from '../controllers/webhook.controller.js';
 
 const router = Router();
 
@@ -18,5 +18,12 @@ router.post('/stripe', handleStripeWebhook);
  * IMPORTANTE: Este endpoint usa JSON parser normal (no raw)
  */
 router.post('/suno', handleSunoWebhook);
+
+/**
+ * Endpoint de prueba para forzar el envío de correo
+ * POST /webhook/test-email/:orderId
+ * Envía el correo de canciones listas de una orden específica
+ */
+router.post('/test-email/:orderId', testEmailSend);
 
 export default router;

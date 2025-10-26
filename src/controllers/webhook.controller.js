@@ -533,15 +533,24 @@ export const handleSunoWebhook = async (req, res) => {
  */
 async function checkAndNotifyOrderCompletion(orderId) {
   try {
+    console.log('========================================');
     console.log(`🔍 Verificando completitud de orden ${orderId}...`);
+    console.log('========================================');
 
     // Obtener todas las canciones de la orden
     const songs = await storage.getOrderSongs(orderId);
+
+    console.log(`📊 Total canciones en orden: ${songs.length}`);
 
     if (songs.length === 0) {
       console.warn(`⚠️ No hay canciones para la orden ${orderId}`);
       return;
     }
+
+    // Log de estado de cada canción
+    songs.forEach((song, index) => {
+      console.log(`  ${index + 1}. Canción ID ${song.id} - Status: ${song.status} - Title: ${song.title || 'N/A'}`);
+    });
 
     // Verificar si todas están completadas o fallidas (ninguna en 'generating')
     const allFinished = songs.every(song =>
@@ -550,6 +559,8 @@ async function checkAndNotifyOrderCompletion(orderId) {
 
     if (!allFinished) {
       console.log(`🔄 Orden ${orderId} aún tiene canciones generándose`);
+      const pending = songs.filter(s => s.status === 'generating');
+      console.log(`⏳ Canciones pendientes: ${pending.length}`);
       return;
     }
 
@@ -561,14 +572,24 @@ async function checkAndNotifyOrderCompletion(orderId) {
     // Obtener la orden con el email
     const order = await storage.getOrderById(orderId);
 
-    if (!order || !order.userEmail) {
+    if (!order) {
+      console.error(`❌ Orden ${orderId} no encontrada`);
+      return;
+    }
+
+    console.log(`📧 Email del usuario: ${order.userEmail || 'N/A'}`);
+
+    if (!order.userEmail) {
       console.warn(`⚠️ Orden ${orderId} sin email, no se puede notificar`);
       return;
     }
 
     // Enviar email según el resultado
     if (completedSongs.length > 0) {
+      console.log('========================================');
       console.log(`📧 Enviando email de canciones listas a ${order.userEmail}`);
+      console.log(`📊 ${completedSongs.length} canción(es) completada(s)`);
+      console.log('========================================');
 
       const emailResult = await emailService.sendSongsReadyEmail(
         order.userEmail,
@@ -600,7 +621,122 @@ async function checkAndNotifyOrderCompletion(orderId) {
       );
     }
 
+    console.log('========================================');
+    console.log(`✅ Proceso de notificación completado para orden ${orderId}`);
+    console.log('========================================');
+
   } catch (error) {
     console.error(`❌ Error verificando completitud de orden ${orderId}:`, error);
+    console.error('Stack:', error.stack);
   }
 }
+
+/**
+ * Endpoint de prueba para forzar el envío de correo de una orden
+ * POST /webhook/test-email/:orderId
+ */
+export const testEmailSend = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    console.log('========================================');
+    console.log(`📧 TEST - Forzando envío de correo para orden ${orderId}`);
+    console.log('========================================');
+
+    // Verificar que la orden existe
+    const order = await storage.getOrderById(parseInt(orderId));
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Orden no encontrada'
+      });
+    }
+
+    // Obtener las canciones de la orden
+    const songs = await storage.getOrderSongs(parseInt(orderId));
+
+    if (songs.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No hay canciones en esta orden'
+      });
+    }
+
+    console.log(`📊 Canciones encontradas: ${songs.length}`);
+    songs.forEach((song, index) => {
+      console.log(`  ${index + 1}. ${song.title || 'N/A'} - Status: ${song.status} - AudioURL: ${song.audioUrl ? '✅' : '❌'}`);
+    });
+
+    const completedSongs = songs.filter(song => song.status === 'completed' && song.audioUrl);
+
+    if (completedSongs.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No hay canciones completadas con audio en esta orden',
+        details: {
+          total: songs.length,
+          generating: songs.filter(s => s.status === 'generating').length,
+          failed: songs.filter(s => s.status === 'failed').length,
+          completed: songs.filter(s => s.status === 'completed').length,
+          completedWithAudio: completedSongs.length
+        }
+      });
+    }
+
+    // Verificar email
+    if (!order.userEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'La orden no tiene email de usuario'
+      });
+    }
+
+    console.log(`📧 Enviando email a: ${order.userEmail}`);
+    console.log(`📊 Canciones completadas: ${completedSongs.length}`);
+
+    // Enviar email
+    const emailResult = await emailService.sendSongsReadyEmail(
+      order.userEmail,
+      completedSongs,
+      parseInt(orderId)
+    );
+
+    if (emailResult.success) {
+      console.log(`✅ Email de prueba enviado exitosamente`);
+      if (emailResult.previewUrl) {
+        console.log(`📧 Preview URL: ${emailResult.previewUrl}`);
+      }
+
+      return res.json({
+        success: true,
+        message: 'Email enviado exitosamente',
+        data: {
+          orderId,
+          email: order.userEmail,
+          songsCount: completedSongs.length,
+          messageId: emailResult.messageId,
+          previewUrl: emailResult.previewUrl
+        }
+      });
+    } else {
+      console.error(`❌ Error enviando email: ${emailResult.error}`);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Error enviando email',
+        error: emailResult.error
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Error en testEmailSend:', error);
+    console.error('Stack:', error.stack);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Error procesando la prueba de email',
+      error: error.message
+    });
+  }
+};
