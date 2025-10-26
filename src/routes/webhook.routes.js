@@ -4,7 +4,8 @@ import {
   handleStripeWebhook,
   handleSunoWebhook,
   testEmailSend,
-  checkSunoWebhookConfig
+  checkSunoWebhookConfig,
+  updateOrderEmail
 } from '../controllers/webhook.controller.js';
 
 const router = Router();
@@ -30,6 +31,13 @@ router.post('/suno', handleSunoWebhook);
  * Verifica que todas las variables de entorno estén configuradas correctamente
  */
 router.get('/suno-config', checkSunoWebhookConfig);
+
+/**
+ * Endpoint para actualizar el email de una orden
+ * POST /webhook/update-order-email/:orderId
+ * Body: { email: "usuario@example.com" } (opcional)
+ */
+router.post('/update-order-email/:orderId', updateOrderEmail);
 
 /**
  * Endpoint de prueba para forzar el envío de correo

@@ -188,6 +188,10 @@ export class DatabaseStorage {
     return Order.update({ status }, { where: { id: orderId } });
   }
 
+  async updateOrderEmail(orderId, email) {
+    return Order.update({ userEmail: email }, { where: { id: orderId } });
+  }
+
   async updateOrderItemStatus(orderItemId, status) {
     await OrderItem.update({ status }, { where: { id: orderItemId } });
 
