@@ -632,6 +632,125 @@ async function checkAndNotifyOrderCompletion(orderId) {
 }
 
 /**
+ * Endpoint de diagnóstico para verificar la configuración del webhook de Suno
+ * GET /webhook/suno-config
+ */
+export const checkSunoWebhookConfig = async (req, res) => {
+  try {
+    const sunoCallbackUrl = process.env.SUNO_CALLBACK_URL;
+    const sunoApiKey = process.env.SUNO_API_KEY;
+    const port = process.env.PORT || 3000;
+
+    console.log('========================================');
+    console.log('🔍 DIAGNÓSTICO DE WEBHOOK DE SUNO');
+    console.log('========================================');
+
+    const diagnostics = {
+      timestamp: new Date().toISOString(),
+      configuration: {
+        sunoCallbackUrl: {
+          configured: !!sunoCallbackUrl,
+          value: sunoCallbackUrl || 'NO CONFIGURADO',
+          valid: sunoCallbackUrl && (sunoCallbackUrl.startsWith('http://') || sunoCallbackUrl.startsWith('https://'))
+        },
+        sunoApiKey: {
+          configured: !!sunoApiKey,
+          value: sunoApiKey ? `${sunoApiKey.substring(0, 10)}...` : 'NO CONFIGURADO'
+        },
+        serverPort: port,
+        expectedWebhookPath: '/webhook/suno',
+        fullWebhookUrl: sunoCallbackUrl || `http://localhost:${port}/webhook/suno`
+      },
+      webhookEndpoint: {
+        path: '/webhook/suno',
+        method: 'POST',
+        contentType: 'application/json',
+        registered: true
+      },
+      recommendations: []
+    };
+
+    // Validaciones y recomendaciones
+    if (!sunoCallbackUrl) {
+      diagnostics.recommendations.push({
+        level: 'WARNING',
+        message: 'SUNO_CALLBACK_URL no está configurado. El sistema usará polling en lugar de webhooks.',
+        solution: 'Configura SUNO_CALLBACK_URL en tu archivo .env con una URL pública (ej: usando ngrok)'
+      });
+    } else if (!sunoCallbackUrl.includes('webhook/suno')) {
+      diagnostics.recommendations.push({
+        level: 'ERROR',
+        message: 'SUNO_CALLBACK_URL no apunta al endpoint correcto',
+        solution: `La URL debe terminar en /webhook/suno. Ejemplo: ${sunoCallbackUrl.split('/webhook')[0]}/webhook/suno`
+      });
+    } else if (sunoCallbackUrl.includes('localhost') || sunoCallbackUrl.includes('127.0.0.1')) {
+      diagnostics.recommendations.push({
+        level: 'ERROR',
+        message: 'SUNO_CALLBACK_URL usa localhost, pero Suno necesita una URL pública',
+        solution: 'Usa ngrok u otro servicio de tunneling. Ejecuta: npx ngrok http 3000'
+      });
+    } else {
+      diagnostics.recommendations.push({
+        level: 'SUCCESS',
+        message: 'SUNO_CALLBACK_URL está configurado correctamente',
+        details: `Suno enviará webhooks a: ${sunoCallbackUrl}`
+      });
+    }
+
+    if (!sunoApiKey) {
+      diagnostics.recommendations.push({
+        level: 'ERROR',
+        message: 'SUNO_API_KEY no está configurado',
+        solution: 'Configura SUNO_API_KEY en tu archivo .env'
+      });
+    }
+
+    // Agregar información sobre cómo probar
+    diagnostics.testing = {
+      manualTest: {
+        description: 'Ejecuta este comando para simular un webhook de Suno',
+        command: 'node test-webhook.js'
+      },
+      realTest: {
+        description: 'Genera una canción real y monitorea los logs',
+        steps: [
+          '1. Genera una canción desde tu frontend o Postman',
+          '2. Espera ~60 segundos',
+          '3. Busca en los logs: "📨 WEBHOOK DE SUNO RECIBIDO"',
+          '4. Si no aparece, el webhook no está llegando'
+        ]
+      },
+      ngrokSetup: {
+        description: 'Si no estás usando ngrok, configúralo así:',
+        steps: [
+          '1. Instala ngrok: npm install -g ngrok',
+          '2. Ejecuta: ngrok http 3000',
+          '3. Copia la URL HTTPS (ej: https://abc123.ngrok-free.app)',
+          '4. En .env: SUNO_CALLBACK_URL=https://abc123.ngrok-free.app/webhook/suno',
+          '5. Reinicia tu servidor'
+        ]
+      }
+    };
+
+    console.log('Configuración verificada');
+    console.log('Recomendaciones:', diagnostics.recommendations.length);
+
+    return res.json({
+      success: true,
+      diagnostics
+    });
+
+  } catch (error) {
+    console.error('❌ Error en diagnóstico:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
  * Endpoint de prueba para forzar el envío de correo de una orden
  * POST /webhook/test-email/:orderId
  */
