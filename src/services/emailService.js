@@ -8,7 +8,8 @@ import nodemailer from 'nodemailer';
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 export class EmailService {
   constructor() {
@@ -68,8 +69,12 @@ export class EmailService {
         <li>
           <strong>${song.title || 'Canción sin título'}</strong><br>
           <small>Género: ${song.genre || 'N/A'}</small><br>
-          <a href="${FRONTEND_URL}/songs/${song.id}">Escuchar canción</a> |
-          <a href="${FRONTEND_URL}/songs/${song.id}/download">Descargar</a>
+          ${song.audioUrl ? `
+            <a href="${song.audioUrl}" target="_blank" style="color: #667eea; text-decoration: none;">🎵 Escuchar</a> |
+            <a href="${song.audioUrl}" download="${song.title || 'cancion'}.mp3" style="color: #667eea; text-decoration: none;">📥 Descargar</a>
+          ` : `
+            <span style="color: #999;">Audio en proceso...</span>
+          `}
         </li>
       `).join('');
 
@@ -117,7 +122,8 @@ export class EmailService {
 
                 <p style="margin-top: 30px;">
                   <strong>Consejos:</strong><br>
-                  • Puedes descargar tus canciones en formato MP3<br>
+                  • Haz clic en "Escuchar" para reproducir la canción<br>
+                  • Haz clic en "Descargar" para guardar el archivo MP3<br>
                   • Las canciones estarán disponibles en tu cuenta para siempre<br>
                   • Comparte tus canciones con quien quieras 💜
                 </p>
@@ -138,9 +144,11 @@ export class EmailService {
 Orden #${orderId}
 
 Tus canciones:
-${songs.map(s => `- ${s.title || 'Sin título'} (${s.genre || 'N/A'})\n  ${FRONTEND_URL}/songs/${s.id}`).join('\n')}
+${songs.map(s => `- ${s.title || 'Sin título'} (${s.genre || 'N/A'})
+  ${s.audioUrl ? `🎵 Escuchar/Descargar: ${s.audioUrl}` : 'Audio en proceso...'}`).join('\n')}
 
 Ver orden completa: ${FRONTEND_URL}/orders/${orderId}
+Ver todas mis canciones: ${FRONTEND_URL}/songs
 
 ¡Disfruta tu música!
 
