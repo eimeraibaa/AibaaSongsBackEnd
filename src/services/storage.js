@@ -172,13 +172,15 @@ export class DatabaseStorage {
   }
 
   async getOrderById(orderId) {
-    return Order.findByPk(orderId, { include: [OrderItem] });
+    return Order.findByPk(orderId, {
+      include: [{ model: OrderItem, as: 'items' }]
+    });
   }
 
   async getOrderByPaymentIntent(paymentIntentId) {
     return Order.findOne({
       where: { stripePaymentIntentId: paymentIntentId },
-      include: [OrderItem],
+      include: [{ model: OrderItem, as: 'items' }],
     });
   }
 
@@ -196,7 +198,7 @@ export class DatabaseStorage {
   async checkIfSongAlreadyPaid(userId, prompt) {
     const item = await OrderItem.findOne({
       where: { prompt },
-      include: [{ model: Order, where: { userId } }],
+      include: [{ model: Order, as: 'order', where: { userId } }],
     });
     return item;
   }
