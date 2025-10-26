@@ -632,6 +632,81 @@ async function checkAndNotifyOrderCompletion(orderId) {
 }
 
 /**
+ * Endpoint para actualizar el email de una orden
+ * POST /webhook/update-order-email/:orderId
+ * Body: { email: "usuario@example.com" } (opcional, usa el del usuario si no se proporciona)
+ */
+export const updateOrderEmail = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { email } = req.body || {};
+
+    console.log('========================================');
+    console.log(`📧 Actualizando email de orden ${orderId}...`);
+    console.log('========================================');
+
+    // Obtener la orden
+    const order = await storage.getOrderById(parseInt(orderId));
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Orden no encontrada'
+      });
+    }
+
+    console.log(`📊 Orden encontrada: ID ${order.id}`);
+    console.log(`📧 Email actual: ${order.userEmail || 'N/A'}`);
+
+    // Determinar el email a usar
+    let emailToUse = email;
+
+    if (!emailToUse) {
+      // Si no se proporcionó email, obtener del usuario
+      const user = await storage.getUser(order.userId);
+
+      if (!user || !user.email) {
+        return res.status(400).json({
+          success: false,
+          message: 'No se proporcionó email y el usuario no tiene email configurado'
+        });
+      }
+
+      emailToUse = user.email;
+      console.log(`✅ Email obtenido del usuario: ${emailToUse}`);
+    } else {
+      console.log(`✅ Email proporcionado: ${emailToUse}`);
+    }
+
+    // Actualizar la orden
+    await storage.updateOrderEmail(parseInt(orderId), emailToUse);
+
+    console.log('========================================');
+    console.log('✅ Email actualizado exitosamente');
+    console.log('========================================');
+
+    return res.json({
+      success: true,
+      message: 'Email de orden actualizado exitosamente',
+      data: {
+        orderId: parseInt(orderId),
+        email: emailToUse
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error actualizando email de orden:', error);
+    console.error('Stack:', error.stack);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Error actualizando email de orden',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Endpoint de diagnóstico para verificar la configuración del webhook de Suno
  * GET /webhook/suno-config
  */
