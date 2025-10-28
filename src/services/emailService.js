@@ -79,7 +79,7 @@ export class EmailService {
       `).join('');
 
       const mailOptions = {
-        from: `"🎵 Aibaa Songs" <${EMAIL_FROM}>`,
+        from: `"🎵 Make Ur Song" <${EMAIL_FROM}>`,
         to: userEmail,
         subject: '🎉 ¡Tus canciones personalizadas están listas!',
         html: `
@@ -89,13 +89,13 @@ export class EmailService {
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .header { background: linear-gradient(135deg, #e69216ff 0%, #e69216ff 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
               .song-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
               .song-list li { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
               .song-list li:last-child { border-bottom: none; }
-              .button { display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
-              .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+              .button { display: inline-block; padding: 12px 24px; background: #e69216ff; color: white; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+              .footer { text-align: center; margin-top: 30px; color: #e69216ff; font-size: 12px; }
             </style>
           </head>
           <body>
@@ -130,7 +130,7 @@ export class EmailService {
               </div>
               <div class="footer">
                 <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-                <p>© ${new Date().getFullYear()} Aibaa Songs - Creando música con IA</p>
+                <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música</p>
               </div>
             </div>
           </body>
@@ -152,7 +152,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
 
 ¡Disfruta tu música!
 
-© ${new Date().getFullYear()} Aibaa Songs
+© ${new Date().getFullYear()} Make Ur Songs
         `.trim(),
       };
 

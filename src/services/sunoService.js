@@ -73,7 +73,7 @@ export class SunoService {
             style: style,
             title: title,
             make_instrumental: false,
-            model: 'V3_5',
+            model: 'V5',
             customMode: true,
             instrumental: false,
             callBackUrl: process.env.SUNO_CALLBACK_URL, // Ahora acepta callbackUrl como parámetro

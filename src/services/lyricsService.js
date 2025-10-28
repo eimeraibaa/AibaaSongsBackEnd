@@ -14,7 +14,9 @@ Géneros musicales: ${genres.join(', ')}
 ${dedicatedTo ? `Dedicada a: ${dedicatedTo}` : ''}
 
 Por favor genera letras que:
-- Reflejen el estilo de los géneros mencionados
+- Sean parecidas al promt que te envían.
+- Sea lo más parecido al prompt generado por el usuario, sin importar sus errores ortográficos,letra extraña o significado confuso.
+- Toma el contexto del prompt muy en serio, para que las letras reflejen fielmente la intención del usuario.
 - Tengan una estructura de canción completa (verso, coro, verso, coro, puente, coro)
 - Tengan entre 150-300 palabras
 
