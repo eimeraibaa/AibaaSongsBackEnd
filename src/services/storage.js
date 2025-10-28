@@ -302,7 +302,7 @@ export class DatabaseStorage {
             include: [
               {
                 model: Order,
-                as: 'Order',
+                as: 'order',
                 attributes: ['id', 'userId', 'totalAmount', 'status', 'createdAt']
               }
             ]

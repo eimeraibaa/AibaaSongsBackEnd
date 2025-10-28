@@ -243,7 +243,7 @@ export const getSong = async (req, res) => {
     }
 
     // Verificar que el usuario sea el dueño de la canción
-    if (userId && song.OrderItem?.Order?.userId !== userId) {
+    if (userId && song.OrderItem?.order?.userId !== userId) {
       return res.status(403).json({
         success: false,
         message: 'No tienes permiso para acceder a esta canción'
@@ -386,7 +386,7 @@ export const streamSong = async (req, res) => {
     }
 
     // Verificar que el usuario sea el dueño de la canción
-    if (userId && song.OrderItem?.Order?.userId !== userId) {
+    if (userId && song.OrderItem?.order?.userId !== userId) {
       return res.status(403).json({
         success: false,
         message: 'No tienes permiso para acceder a esta canción'
