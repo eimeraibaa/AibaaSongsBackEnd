@@ -81,6 +81,14 @@ export const OrderItem = sequelize.define('OrderItem', {
     type: DataTypes.ARRAY(DataTypes.TEXT),
     allowNull: false,
   },
+  singerGender: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+    defaultValue: 'male',
+    validate: {
+      isIn: [['male', 'female']]
+    }
+  },
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
