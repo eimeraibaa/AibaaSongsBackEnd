@@ -29,6 +29,14 @@ export const CartItem = sequelize.define(
       type: DataTypes.ARRAY(DataTypes.TEXT),
       allowNull: false,
     },
+    singerGender: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+      defaultValue: 'male',
+      validate: {
+        isIn: [['male', 'female']]
+      }
+    },
     previewUrl: {
       type: DataTypes.TEXT,
       allowNull: true,

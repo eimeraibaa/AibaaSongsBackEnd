@@ -67,6 +67,7 @@ export const songRequests = pgTable('song_requests', {
   dedicatedTo: text('dedicated_to'),
   prompt: text('prompt').notNull(),
   genres: text('genres').array().notNull(),
+  singerGender: varchar('singerGender', { length: 10 }).notNull().default('male'),
   status: text('status').notNull().default('pending'),
   previewUrl: text('preview_url'),
   finalUrl: text('final_url'),
@@ -81,6 +82,7 @@ export const cartItems = pgTable('cart_items', {
   dedicatedTo: text('dedicated_to'),
   prompt: text('prompt').notNull(),
   genres: text('genres').array().notNull(),
+  singerGender: varchar('singerGender', { length: 10 }).notNull().default('male'),
   previewUrl: text('preview_url'),
   status: text('status').notNull().default('draft'),
   price: decimal('price', { precision: 10, scale: 2 }).notNull().default('49.99'),
@@ -105,6 +107,7 @@ export const orderItems = pgTable("order_items", {
   dedicatedTo: text("dedicated_to"),
   prompt: text("prompt").notNull(),
   genres: text("genres").array().notNull(),
+  singerGender: varchar('singerGender', { length: 10 }).notNull().default('male'),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default('processing'), // processing, completed, delivered
   previewUrl: text("preview_url"),

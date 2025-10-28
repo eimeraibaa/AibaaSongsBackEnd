@@ -32,7 +32,9 @@ export const generateSongsFromOrder = async (req, res) => {
         const sunoResult = await sunoService.generateSong(
           item.lyrics,
           item.genres[0] || 'pop',
-          item.dedicatedTo || 'Canción Personalizada'
+          item.dedicatedTo || 'Canción Personalizada',
+          '', // callbackUrl (vacío para polling)
+          item.singerGender || 'male' // género del cantante
         );
 
         // 3. Crear registro de canción (inicialmente sin audio URL)
