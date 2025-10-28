@@ -299,6 +299,7 @@ export const getUserSongs = async (req, res) => {
 /**
  * Descargar archivo de audio de una canción
  * GET /songs/:id/download
+ * Accesible públicamente para permitir descargas desde correos
  */
 export const downloadSong = async (req, res) => {
   try {
@@ -311,14 +312,6 @@ export const downloadSong = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Canción no encontrada'
-      });
-    }
-
-    // Verificar que el usuario sea el dueño de la canción
-    if (userId && song.OrderItem?.Order?.userId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: 'No tienes permiso para descargar esta canción'
       });
     }
 
@@ -339,16 +332,23 @@ export const downloadSong = async (req, res) => {
         throw new Error(`Error descargando archivo: ${response.status}`);
       }
 
-      // Configurar headers para la descarga
-      const filename = `${song.title || 'cancion'}-${song.id}.mp3`.replace(/[^a-z0-9.-]/gi, '_');
+      // Sanitizar el título para usarlo como nombre de archivo
+      const sanitizedTitle = (song.title || 'cancion')
+        .replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s-]/g, '') // Permitir caracteres españoles
+        .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+        .substring(0, 50); // Limitar longitud
 
+      const filename = `${sanitizedTitle}.mp3`;
+
+      // Configurar headers para la descarga forzada
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'no-cache');
 
       // Stream del archivo al cliente
       response.body.pipe(res);
 
-      console.log(`✅ Descarga iniciada para canción ${id}`);
+      console.log(`✅ Descarga iniciada para canción ${id} - ${filename}`);
 
     } catch (downloadError) {
       console.error('Error descargando archivo:', downloadError);
