@@ -50,8 +50,8 @@ router.get('/:id/stream', isAuthenticated, streamSong);
 /**
  * GET /song/:id/download
  * Descarga el archivo de audio de una canción
- * Requiere autenticación
+ * No requiere autenticación (accesible desde emails)
  */
-router.get('/:id/download', isAuthenticated, downloadSong);
+router.get('/:id/download', downloadSong);
 
 export default router;

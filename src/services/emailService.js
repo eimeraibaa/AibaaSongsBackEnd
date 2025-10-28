@@ -69,9 +69,9 @@ export class EmailService {
         <li>
           <strong>${song.title || 'Canción sin título'}</strong><br>
           <small>Género: ${song.genre || 'N/A'}</small><br>
-          ${song.audioUrl ? `
+          ${song.audioUrl && song.id ? `
             <a href="${song.audioUrl}" target="_blank" style="color: #667eea; text-decoration: none;">🎵 Escuchar</a> |
-            <a href="${song.audioUrl}" download="${song.title || 'cancion'}.mp3" style="color: #667eea; text-decoration: none;">📥 Descargar</a>
+            <a href="${BACKEND_URL}/song/${song.id}/download" style="color: #667eea; text-decoration: none;">📥 Descargar</a>
           ` : `
             <span style="color: #999;">Audio en proceso...</span>
           `}
@@ -122,8 +122,8 @@ export class EmailService {
 
                 <p style="margin-top: 30px;">
                   <strong>Consejos:</strong><br>
-                  • Haz clic en "Escuchar" para reproducir la canción<br>
-                  • Haz clic en "Descargar" para guardar el archivo MP3<br>
+                  • Haz clic en "Escuchar" para reproducir la canción en tu navegador<br>
+                  • Haz clic en "Descargar" para guardar el archivo MP3 con el nombre original directamente en tu equipo<br>
                   • Las canciones estarán disponibles en tu cuenta para siempre<br>
                   • Comparte tus canciones con quien quieras 💜
                 </p>
@@ -145,7 +145,8 @@ Orden #${orderId}
 
 Tus canciones:
 ${songs.map(s => `- ${s.title || 'Sin título'} (${s.genre || 'N/A'})
-  ${s.audioUrl ? `🎵 Escuchar/Descargar: ${s.audioUrl}` : 'Audio en proceso...'}`).join('\n')}
+  ${s.audioUrl && s.id ? `🎵 Escuchar: ${s.audioUrl}
+  📥 Descargar: ${BACKEND_URL}/song/${s.id}/download` : 'Audio en proceso...'}`).join('\n')}
 
 Ver orden completa: ${FRONTEND_URL}/orders/${orderId}
 Ver todas mis canciones: ${FRONTEND_URL}/songs
