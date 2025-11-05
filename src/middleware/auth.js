@@ -31,7 +31,8 @@ export function getSession() {
     cookie: {
       maxAge: sessionTtl,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'development'
+      //secure: process.env.NODE_ENV === 'development'
+      secure: process.env.NODE_ENV === 'production'
     }
   });
 }
@@ -74,27 +75,4 @@ export function setupAuth(app) {
 export function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.status(401).json({ message: "No autenticado auth" });
-}
-
-// Send welcome email via external webhook
-export async function sendWelcomeEmail(user) {
-  try {
-    await fetch(
-      process.env.WELCOME_WEBHOOK_URL || "https://n8n.jengoautomatization.site/webhook/welcomeEmail",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          timestamp: new Date().toISOString(),
-          source: "registration"
-        })
-      }
-    );
-    console.log("✅ Welcome email sent successfully");
-  } catch (err) {
-    console.error("Error sending welcome email:", err);
-  }
 }
