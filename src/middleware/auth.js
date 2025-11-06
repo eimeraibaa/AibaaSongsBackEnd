@@ -11,6 +11,34 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Función para verificar y recrear la tabla sessions si tiene estructura incorrecta
+async function ensureSessionsTable() {
+  const client = await pool.connect();
+  try {
+    // Intentar verificar si la columna 'sess' existe
+    const result = await client.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'sessions' AND column_name = 'sess'
+    `);
+
+    // Si la tabla existe pero no tiene la columna 'sess', recrearla
+    if (result.rows.length === 0) {
+      console.log('⚠️  Tabla sessions tiene estructura incorrecta, recreando...');
+      await client.query('DROP TABLE IF EXISTS sessions CASCADE;');
+      console.log('✅ Tabla sessions recreada');
+    }
+  } catch (error) {
+    // Si la tabla no existe, connect-pg-simple la creará
+    console.log('📝 Tabla sessions será creada por connect-pg-simple');
+  } finally {
+    client.release();
+  }
+}
+
+// Ejecutar verificación al importar el módulo
+await ensureSessionsTable();
+
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
   const PgStore = connectPgSimple(session);
