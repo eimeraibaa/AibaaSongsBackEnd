@@ -28,11 +28,12 @@ export function getSession() {
     store,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Confía en el proxy de Railway
     cookie: {
       maxAge: sessionTtl,
       httpOnly: true,
-      //secure: process.env.NODE_ENV === 'development'
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // 'none' para cross-origin en producción
     }
   });
 }
