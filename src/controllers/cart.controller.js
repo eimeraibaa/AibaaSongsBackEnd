@@ -84,6 +84,56 @@ export const generatePreview = async (req, res) => {
   }
 };
 
+export const updateLyrics = async (req, res) => {
+  try {
+    const cartItemId = parseInt(req.params.id);
+    const { lyrics } = req.body;
+    const userId = req.user.id;
+
+    // Validar que se envíen las letras
+    if (!lyrics || typeof lyrics !== 'string' || lyrics.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Las letras son requeridas y deben ser un texto válido"
+      });
+    }
+
+    // Verificar que el item existe y pertenece al usuario
+    const cartItem = await storage.getCartItemById(cartItemId);
+    
+    if (!cartItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Item no encontrado en el carrito"
+      });
+    }
+
+    if (cartItem.userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "No tienes permiso para editar este item"
+      });
+    }
+
+    // Actualizar las letras
+    const updatedItem = await storage.updateCartItemLyrics(cartItemId, lyrics);
+
+    return res.status(200).json({
+      success: true,
+      message: "Letras actualizadas exitosamente",
+      cartItem: updatedItem
+    });
+
+  } catch (error) {
+    console.error("Error actualizando letras:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar las letras",
+      error: error.message
+    });
+  }
+};
+
 // DELETE /api/cart/:id
 export const removeFromCart = async (req, res) => {
   try {
