@@ -8,34 +8,11 @@ import ordersRoutes from './routes/orders.routes.js';
 import songRouter from './routes/song.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import { setupAuth } from './middleware/auth.js';
-import session from 'express-session';
-import SequelizeStoreFactory from 'connect-session-sequelize';
-import sequelize from './database/database.js';
-
-const SequelizeStore = SequelizeStoreFactory(session.Store);
 
 const app = express()
 
-const sessionStore = new SequelizeStore({
-  db: sequelize,
-  tableName: 'sessions',
-  checkExpirationInterval: 15 * 60 * 1000, // Limpiar sesiones expiradas cada 15 min
-  expiration: 24 * 60 * 60 * 1000 // 24 horas
-});
-
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  store: sessionStore,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
-  }
-}));
-
-sessionStore.sync();
+// Confiar en el proxy de Railway para cookies seguras
+app.set('trust proxy', 1);
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ limit: "2mb", extended: true }));
