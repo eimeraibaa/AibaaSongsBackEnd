@@ -43,7 +43,7 @@ export const registerUser = async (req, res) => {
     }
 
     // Verificar si el usuario ya existe
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await storage.getUserByEmail({ where: { email } });
 
     if (existingUser) {
       // Si el usuario ya existe, intentar login automático
@@ -70,7 +70,7 @@ export const registerUser = async (req, res) => {
       // Crear nuevo usuario
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      const newUser = await User.create({
+      const newUser = await storage.createUser({
         email,
         firstName: firstName || 'Usuario',
         lastName: lastName || 'Temporal',
