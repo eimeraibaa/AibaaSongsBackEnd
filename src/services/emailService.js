@@ -202,7 +202,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
       `).join('');
 
       const mailOptions = {
-        from: `"🎵 Aibaa Songs" <${EMAIL_FROM}>`,
+        from: `"🎵 Make Ur Song" <${EMAIL_FROM}>`,
         to: userEmail,
         subject: '⚠️ Problema con la generación de tus canciones',
         html: `
