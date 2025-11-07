@@ -101,7 +101,14 @@ export function setupAuth(app) {
 
 }
 // Middleware to protect routes
-export function isAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.status(401).json({ message: "No autenticado auth" });
-}
+export const isAuthenticated = (req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+
+  return res.status(401).json({
+    error: 'No autenticado',
+    message: 'Debes iniciar sesión para acceder a este recurso'
+  });
+};
+

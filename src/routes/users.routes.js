@@ -7,5 +7,6 @@ const router = Router()
 router.post('/login',loginUser)
 router.post('/register',registerUser)
 router.get('/auth', isAuthenticated, getAuthenticatedUser);
+router.patch('/profile', isAuthenticated, updateProfile);
 
 export default router;

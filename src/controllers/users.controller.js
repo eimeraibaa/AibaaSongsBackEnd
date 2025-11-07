@@ -33,25 +33,66 @@ export const loginUser = async (req, res, next) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { email, password, confirmPassword, firstName, lastName } = req.body;
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Las contraseñas no coinciden' });
+    const { email, firstName, lastName, password } = req.body;
+
+    // Validar campos requeridos
+    if (!email || !password) {
+      return res.status(400).json({
+        error: 'Email y contraseña son requeridos'
+      });
     }
-    // 1) Crea usuario
-    const newUser = await storage.createUser({ email, password, firstName, lastName });
-    // 2) Responde datos (sin contraseña)
-    res.status(201).json({
-      id: newUser.id,
-      email: newUser.email,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName
+
+    // Verificar si el usuario ya existe
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (existingUser) {
+      // Si el usuario ya existe, intentar login automático
+      // (útil para usuarios temporales que vuelven)
+      const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+
+      if (isPasswordValid) {
+        // Login automático
+        req.login(existingUser, (err) => {
+          if (err) {
+            return res.status(500).json({ error: 'Error al iniciar sesión' });
+          }
+          return res.status(200).json({
+            message: 'Usuario ya existe, sesión iniciada',
+            user: existingUser.toSafeObject()
+          });
+        });
+      } else {
+        return res.status(409).json({
+          error: 'El correo electrónico ya está registrado'
+        });
+      }
+    } else {
+      // Crear nuevo usuario
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const newUser = await User.create({
+        email,
+        firstName: firstName || 'Usuario',
+        lastName: lastName || 'Temporal',
+        password: hashedPassword
+      });
+
+      // Login automático después del registro
+      req.login(newUser, (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Error al iniciar sesión' });
+        }
+        return res.status(201).json({
+          message: 'Usuario registrado exitosamente',
+          user: newUser.toSafeObject()
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Error al registrar usuario:', error);
+    return res.status(500).json({
+      error: 'Error al registrar usuario'
     });
-  } catch (err) {
-    console.error(err);
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({ message: 'El email ya está registrado' });
-    }
-    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
@@ -60,5 +101,50 @@ export const getAuthenticatedUser = (req, res) => {
     res.json(req.user);
   } else {
     res.status(401).json({ message: 'No autenticado' });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id; // Asumiendo que isAuthenticated agrega req.user
+    const { firstName, lastName, email } = req.body;
+
+    // Validar que el email no esté siendo usado por otro usuario
+    if (email) {
+      const existingUser = await User.findOne({
+        where: {
+          email,
+          id: { [Op.ne]: userId } // Op.ne = not equal
+        }
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          error: 'El correo electrónico ya está en uso por otro usuario'
+        });
+      }
+    }
+
+    // Actualizar usuario
+    await User.update(
+      {
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        email: email || undefined
+      },
+      {
+        where: { id: userId }
+      }
+    );
+
+    // Obtener usuario actualizado
+    const updatedUser = await User.findByPk(userId);
+
+    return res.status(200).json(updatedUser.toSafeObject());
+  } catch (error) {
+    console.error('Error al actualizar perfil:', error);
+    return res.status(500).json({
+      error: 'Error al actualizar el perfil'
+    });
   }
 };

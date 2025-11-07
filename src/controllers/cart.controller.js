@@ -11,28 +11,51 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // POST /api/cart/add
 export const addToCart = async (req, res) => {
   try {
+    const userId = req.user.id; // Del middleware isAuthenticated
+    const {
+      dedicatedTo,
+      prompt,
+      genres,
+      emotion,
+      singerGender,
+      favoriteMemory,      // NUEVO
+      whatYouLikeMost,     // NUEVO
+      userEmail            // NUEVO
+    } = req.body;
 
-    console.log('req.user:', req.user);
-    console.log('Adding to cart:', req.body);
+    // Validaciones
+    if (!prompt || prompt.trim().length < 10) {
+      return res.status(400).json({
+        error: 'El prompt debe tener al menos 10 caracteres'
+      });
+    }
 
-    const cartItemData = insertCartItemSchema.parse({
-      ...req.body,
-      userId: req.user.id,
+    if (!genres || genres.length === 0) {
+      return res.status(400).json({
+        error: 'Debe seleccionar al menos un género musical'
+      });
+    }
+
+    // Crear item en el carrito
+    const cartItem = await CartItem.create({
+      userId,
+      dedicatedTo,
+      prompt,
+      genres,
+      emotion,
+      singerGender: singerGender || 'male',
+      favoriteMemory: favoriteMemory || null,      // NUEVO
+      whatYouLikeMost: whatYouLikeMost || null,    // NUEVO
+      userEmail: userEmail || null,                // NUEVO
+      status: 'draft',
+      price: 29.99
     });
 
-    const cartItem = await storage.addToCart(cartItemData);
-
-    return res.json({
-      success: true,
-      message: 'Canción agregada al carrito',
-      cartItem,
-    });
+    return res.status(201).json(cartItem);
   } catch (error) {
-    console.error('Error adding to cart:', error);
-    const message = error instanceof Error ? error.message : 'Error agregando al carrito';
-    return res.status(400).json({
-      success: false,
-      message,
+    console.error('Error al agregar al carrito:', error);
+    return res.status(500).json({
+      error: 'Error al agregar la canción al carrito'
     });
   }
 };

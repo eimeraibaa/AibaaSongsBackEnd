@@ -55,6 +55,21 @@ export const CartItem = sequelize.define(
       allowNull: false,
       defaultValue: 30.00,
     },
+    favoriteMemory: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null
+    },
+    whatYouLikeMost: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null
+    },
+    userEmail: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,

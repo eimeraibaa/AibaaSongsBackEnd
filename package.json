@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
     "bcryptjs": "^3.0.2",
     "connect-pg-simple": "^10.0.0",
     "connect-session-sequelize": "^8.0.1",
