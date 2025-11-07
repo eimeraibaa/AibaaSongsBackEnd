@@ -1,6 +1,7 @@
 // src/controllers/users.controller.js
 import jwt from 'jsonwebtoken';
 import { storage } from '../services/storage.js';
+import bcrypt from 'bcryptjs';
 
 export const loginUser = async (req, res, next) => {
   try {
@@ -43,7 +44,7 @@ export const registerUser = async (req, res) => {
     }
 
     // Verificar si el usuario ya existe
-    const existingUser = await storage.getUserByEmail({ where: { email } });
+    const existingUser = await storage.getUserByEmail(email);
 
     if (existingUser) {
       // Si el usuario ya existe, intentar login automático
