@@ -37,7 +37,7 @@ export const addToCart = async (req, res) => {
     }
 
     // Crear item en el carrito
-    const cartItem = await CartItem.create({
+    const cartItem = await storage.addToCart({
       userId,
       dedicatedTo,
       prompt,

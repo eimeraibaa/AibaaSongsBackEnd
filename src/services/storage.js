@@ -52,7 +52,11 @@ export class DatabaseStorage {
     prompt,
     genres,
     previewUrl = null,
-    price = 30.0,
+    singerGender,
+    favoriteMemory,
+    whatYouLikeMost,
+    userEmail,
+    price = 29.99,
     status = "draft",
   }) {
     return CartItem.create({
@@ -63,6 +67,10 @@ export class DatabaseStorage {
       previewUrl,
       status,
       price,
+      singerGender,
+      favoriteMemory,
+      whatYouLikeMost,
+      userEmail,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
