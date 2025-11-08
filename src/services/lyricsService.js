@@ -1,7 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY, // O CLAUDE_API_KEY
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export const generateLyrics = async (
@@ -13,7 +13,7 @@ export const generateLyrics = async (
   emotion = null
 ) => {
   try {
-    // Construir el prompt para Claude
+    // Construir el prompt para OpenAI
     let userPrompt = `Genera letras para una canción personalizada basada en los siguientes detalles:
 
 Descripción principal: ${prompt}
@@ -50,12 +50,15 @@ Formato la respuesta con las secciones claramente marcadas:
 [PUENTE]
 [CORO FINAL]`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022", // O claude-3-opus-20240229 para mejor calidad
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o", // O gpt-4-turbo para una opción alternativa
       max_tokens: 1024,
       temperature: 0.8,
-      system: "Eres un compositor profesional especializado en escribir letras emotivas y personalizadas para canciones. Escribes en español y tus letras son siempre apropiadas y de alta calidad. Tienes un don especial para capturar recuerdos, emociones y cualidades únicas de las personas en tus letras, haciendo que cada canción sea verdaderamente personal y significativa.",
       messages: [
+        {
+          role: "system",
+          content: "Eres un compositor profesional especializado en escribir letras emotivas y personalizadas para canciones. Escribes en español y tus letras son siempre apropiadas y de alta calidad. Tienes un don especial para capturar recuerdos, emociones y cualidades únicas de las personas en tus letras, haciendo que cada canción sea verdaderamente personal y significativa."
+        },
         {
           role: "user",
           content: userPrompt
@@ -64,11 +67,11 @@ Formato la respuesta con las secciones claramente marcadas:
     });
 
     // Extraer el texto de la respuesta
-    const lyrics = message.content[0].text;
+    const lyrics = completion.choices[0].message.content;
     return lyrics;
 
   } catch (error) {
-    console.error('Error generating lyrics with Claude:', error);
+    console.error('Error generating lyrics with OpenAI:', error);
     throw new Error('Error generando letras con IA');
   }
 };
