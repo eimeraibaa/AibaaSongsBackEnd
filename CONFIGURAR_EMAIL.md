@@ -1,22 +1,8 @@
 # 📧 Configuración de Email para Notificaciones
 
-## ⚠️ Problema Actual
+## Problema Actual
 
-El servicio de email está **desactivado automáticamente** porque:
-
-1. **No hay credenciales de email configuradas** (EMAIL_USER y EMAIL_PASSWORD)
-2. **El firewall del servidor bloquea conexiones SMTP** (común en Railway, Render, Heroku, Docker)
-
-### ¿Qué significa esto?
-
-- ✅ Tu aplicación funciona normalmente
-- ✅ Las canciones se generan correctamente
-- ❌ Los usuarios NO reciben emails de notificación
-- ℹ️ Los logs mostrarán: "Email service desactivado - omitiendo envío de email"
-
----
-
-## Solución
+El servicio de email está fallando porque **no hay credenciales configuradas**. Tienes dos opciones:
 
 ## ✅ Opción 1: Configurar Gmail (Recomendado para Producción)
 
@@ -63,9 +49,28 @@ EMAIL_FROM=makeyursong@gmail.com
 npm start
 ```
 
-### ¿Por qué no funciona el modo de prueba (Ethereal)?
+---
 
-En entornos de producción (Railway, Render, Heroku), los puertos SMTP (25, 587, 465) están bloqueados por seguridad. Por eso el sistema automáticamente desactiva los emails en lugar de fallar con timeout.
+## 🧪 Opción 2: Usar Modo de Prueba (Solo Desarrollo)
+
+Si solo estás probando y no necesitas enviar emails reales, el código ahora **automáticamente usa Ethereal** (emails de prueba) cuando no hay credenciales configuradas.
+
+### Ventajas:
+- ✅ No necesitas configurar nada
+- ✅ Los emails se "envían" pero solo a una cuenta de prueba
+- ✅ Recibes una URL para ver el email en el navegador
+
+### Cómo funciona:
+1. El sistema detecta que no hay `EMAIL_USER` ni `EMAIL_PASSWORD`
+2. Crea una cuenta temporal en Ethereal
+3. Los logs mostrarán:
+   ```
+   📧 Modo de prueba activado. Usuario: xxxxx@ethereal.email
+   📧 Preview URL: https://ethereal.email/message/xxxxx
+   ```
+4. Abre la URL para ver el email
+
+**Nota:** Los emails NO llegan a usuarios reales, solo son para testing.
 
 ---
 
