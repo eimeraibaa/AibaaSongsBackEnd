@@ -13,19 +13,20 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 export class EmailService {
   constructor() {
-    // Configurar transporter de nodemailer
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail', // Puedes cambiar a 'outlook', 'yahoo', etc.
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASSWORD,
-      },
-    });
-
     // Si no hay configuración de email, usar modo de prueba (ethereal)
     if (!EMAIL_USER || !EMAIL_PASSWORD) {
       console.warn('⚠️ No se configuraron credenciales de email. Usando modo de prueba.');
-      this.setupTestAccount();
+      this.readyPromise = this.setupTestAccount();
+    } else {
+      // Configurar transporter de nodemailer con Gmail
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail', // Puedes cambiar a 'outlook', 'yahoo', etc.
+        auth: {
+          user: EMAIL_USER,
+          pass: EMAIL_PASSWORD,
+        },
+      });
+      this.readyPromise = Promise.resolve();
     }
   }
 
@@ -49,6 +50,16 @@ export class EmailService {
       console.log('📧 Modo de prueba activado. Usuario:', testAccount.user);
     } catch (error) {
       console.error('❌ Error configurando cuenta de prueba:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Asegura que el transporter está listo antes de enviar emails
+   */
+  async ensureReady() {
+    if (this.readyPromise) {
+      await this.readyPromise;
     }
   }
 
@@ -60,6 +71,9 @@ export class EmailService {
    */
   async sendSongsReadyEmail(userEmail, songs, orderId) {
     try {
+      // Esperar a que el transporter esté listo
+      await this.ensureReady();
+
       if (!userEmail) {
         console.warn('⚠️ No se proporcionó email de usuario');
         return { success: false, message: 'No email provided' };
@@ -189,6 +203,9 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
    */
   async sendGenerationFailedEmail(userEmail, orderId, failedSongs) {
     try {
+      // Esperar a que el transporter esté listo
+      await this.ensureReady();
+
       if (!userEmail) {
         console.warn('⚠️ No se proporcionó email de usuario');
         return { success: false, message: 'No email provided' };
@@ -266,6 +283,9 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
    */
   async verifyConnection() {
     try {
+      // Esperar a que el transporter esté listo
+      await this.ensureReady();
+
       await this.transporter.verify();
       console.log('✅ Servidor de email listo');
       return true;
