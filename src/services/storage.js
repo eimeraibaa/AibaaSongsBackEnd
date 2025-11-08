@@ -245,7 +245,11 @@ export class DatabaseStorage {
       const lyrics = await generateLyrics(
         cartItem.prompt,
         cartItem.genres,
-        cartItem.dedicatedTo
+        cartItem.dedicatedTo,
+        cartItem.singerGender,
+        cartItem.favoriteMemory,
+        cartItem.whatYouLikeMost,
+        CartItem.emotion
       );
 
       // 3. Actualizar el cart item con las letras generadas

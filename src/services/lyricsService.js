@@ -35,11 +35,11 @@ Por favor genera letras que:
 - Sean parecidas al prompt que te envían.
 - Sea lo más parecido al prompt generado por el usuario, sin importar sus errores ortográficos, letra extraña o significado confuso.
 - Toma el contexto del prompt muy en serio, para que las letras reflejen fielmente la intención del usuario.
-${favoriteMemory ? '- Incorporen sutilmente el recuerdo favorito mencionado en la letra de la canción.' : ''}
-${whatYouLikeMost ? '- Reflejen las cualidades que más se aprecian de esta persona.' : ''}
+${favoriteMemory ? '- Incorpora el recuerdo favorito mencionado en la letra de la canción.' : ''}
+${whatYouLikeMost ? '- Refleja las cualidades que más se aprecian de esta persona.' : ''}
 - Tengan una estructura de canción completa (verso, coro, verso, coro, puente, coro)
 - Tengan entre 150-300 palabras
-- Sean emotivas y capturen los sentimientos descritos
+- Captura los sentimientos descritos
 - Fluyan naturalmente con el género musical seleccionado
 
 Formato la respuesta con las secciones claramente marcadas:
