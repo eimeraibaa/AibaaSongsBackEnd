@@ -469,20 +469,12 @@ export const handleSunoWebhook = async (req, res) => {
         console.log(`🎵 Procesando canción de Suno: ${sunoSongId}`);
         console.log(`📋 TaskId del webhook: ${taskId}`);
 
-        // Buscar la canción en nuestra base de datos
-        // IMPORTANTE: Cuando se usa webhook, guardamos el taskId temporalmente en sunoSongId
-        // Así que primero intentamos buscar por el taskId
-        let song = await storage.getSongBySunoId(taskId);
-
-        // Si no se encuentra por taskId, intentar buscar por el sunoSongId real
-        if (!song) {
-          console.log(`ℹ️ No se encontró canción con taskId: ${taskId}, buscando por sunoSongId: ${sunoSongId}`);
-          song = await storage.getSongBySunoId(sunoSongId);
-        }
+        // Buscar la canción en nuestra base de datos por taskId
+        // El taskId se guarda en sunoSongId al crear la canción
+        const song = await storage.getSongBySunoId(taskId);
 
         if (!song) {
-          // Verificar si esta es una variación adicional de Suno (genera 2 por defecto)
-          // Si ya procesamos una canción de este taskId, esta es una variación extra
+          // Esta es una variación adicional de Suno (genera 2 por defecto)
           skippedCount++;
           console.log(`ℹ️ Variación adicional de Suno omitida (${skippedCount}/${songsData.length})`);
           console.log(`   TaskId: ${taskId}, SunoSongId: ${sunoSongId}`);
@@ -491,7 +483,7 @@ export const handleSunoWebhook = async (req, res) => {
         }
 
         console.log(`✅ Canción encontrada en BD: ID ${song.id}`);
-        console.log(`   Estado actual: ${song.status}, SunoSongId en BD: ${song.sunoSongId}`);
+        console.log(`   Estado actual: ${song.status}, TaskId en BD: ${song.sunoSongId}`);
         processedCount++;
 
         // Verificar que haya audio_url (puede estar vacío en webhooks intermedios)
@@ -504,12 +496,6 @@ export const handleSunoWebhook = async (req, res) => {
 
         // Actualizar la canción con la URL del audio
         await storage.updateSongStatus(song.id, 'completed', audio_url);
-
-        // Actualizar el sunoSongId con el ID real si era un taskId temporal
-        if (song.sunoSongId === taskId && taskId !== sunoSongId) {
-          console.log(`🔄 Actualizando sunoSongId de taskId temporal (${taskId}) a ID real (${sunoSongId})`);
-          await storage.updateSongSunoId(song.id, sunoSongId);
-        }
 
         // Actualizar también la imagen si viene
         if (image_url && song.imageUrl !== image_url) {
