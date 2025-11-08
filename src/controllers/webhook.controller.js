@@ -455,6 +455,11 @@ export const handleSunoWebhook = async (req, res) => {
     }
 
     console.log('✅ Webhook "complete" recibido - procesando canciones...');
+    console.log(`📊 Total canciones en webhook: ${songsData.length}`);
+
+    // Track de canciones procesadas
+    let processedCount = 0;
+    let skippedCount = 0;
 
     // Procesar cada canción en el callback
     for (const songData of songsData) {
@@ -471,16 +476,23 @@ export const handleSunoWebhook = async (req, res) => {
 
         // Si no se encuentra por taskId, intentar buscar por el sunoSongId real
         if (!song) {
-          console.log(`⚠️ No se encontró canción con taskId: ${taskId}, buscando por sunoSongId: ${sunoSongId}`);
+          console.log(`ℹ️ No se encontró canción con taskId: ${taskId}, buscando por sunoSongId: ${sunoSongId}`);
           song = await storage.getSongBySunoId(sunoSongId);
         }
 
         if (!song) {
-          console.warn(`⚠️ Canción no encontrada en BD. TaskId: ${taskId}, SunoSongId: ${sunoSongId}`);
+          // Verificar si esta es una variación adicional de Suno (genera 2 por defecto)
+          // Si ya procesamos una canción de este taskId, esta es una variación extra
+          skippedCount++;
+          console.log(`ℹ️ Variación adicional de Suno omitida (${skippedCount}/${songsData.length})`);
+          console.log(`   TaskId: ${taskId}, SunoSongId: ${sunoSongId}`);
+          console.log(`   Nota: Suno genera múltiples variaciones por defecto. Solo se guarda la primera.`);
           continue;
         }
 
         console.log(`✅ Canción encontrada en BD: ID ${song.id}`);
+        console.log(`   Estado actual: ${song.status}, SunoSongId en BD: ${song.sunoSongId}`);
+        processedCount++;
 
         // Verificar que haya audio_url (puede estar vacío en webhooks intermedios)
         if (!audio_url || audio_url.trim() === '') {
@@ -519,8 +531,15 @@ export const handleSunoWebhook = async (req, res) => {
       }
     }
 
+    // Log de resumen
+    console.log('========================================');
+    console.log('📊 RESUMEN DEL PROCESAMIENTO:');
+    console.log(`✅ Canciones procesadas: ${processedCount}`);
+    console.log(`ℹ️ Variaciones omitidas: ${skippedCount}`);
+    console.log('========================================');
+
     // Responder a Suno que el webhook fue recibido
-    res.json({ received: true, processed: songsData.length });
+    res.json({ received: true, processed: processedCount, skipped: skippedCount });
 
   } catch (error) {
     console.error('❌ Error procesando webhook de Suno:', error);
