@@ -13,18 +13,23 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 export class EmailService {
   constructor() {
+    this.disabled = false; // Flag para desactivar emails si falla el setup
+
     // Si no hay configuración de email, usar modo de prueba (ethereal)
     if (!EMAIL_USER || !EMAIL_PASSWORD) {
-      console.warn('⚠️ No se configuraron credenciales de email. Usando modo de prueba.');
+      console.warn('⚠️ No se configuraron credenciales de email. Intentando modo de prueba...');
       this.readyPromise = this.setupTestAccount();
     } else {
       // Configurar transporter de nodemailer con Gmail
       this.transporter = nodemailer.createTransport({
-        service: 'gmail', // Puedes cambiar a 'outlook', 'yahoo', etc.
+        service: 'gmail',
         auth: {
           user: EMAIL_USER,
           pass: EMAIL_PASSWORD,
         },
+        // Timeout más corto para fallar rápido si hay problemas
+        connectionTimeout: 10000, // 10 segundos
+        greetingTimeout: 10000,
       });
       this.readyPromise = Promise.resolve();
     }
@@ -35,7 +40,15 @@ export class EmailService {
    */
   async setupTestAccount() {
     try {
-      const testAccount = await nodemailer.createTestAccount();
+      // Timeout para evitar esperas largas
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout configurando cuenta de prueba')), 10000)
+      );
+
+      const testAccount = await Promise.race([
+        nodemailer.createTestAccount(),
+        timeoutPromise
+      ]);
 
       this.transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
@@ -45,12 +58,30 @@ export class EmailService {
           user: testAccount.user,
           pass: testAccount.pass,
         },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
       });
 
       console.log('📧 Modo de prueba activado. Usuario:', testAccount.user);
     } catch (error) {
-      console.error('❌ Error configurando cuenta de prueba:', error);
-      throw error;
+      console.error('❌ Error configurando cuenta de prueba:', error.message);
+      console.warn('');
+      console.warn('⚠️ ========================================');
+      console.warn('⚠️ EMAILS DESACTIVADOS AUTOMÁTICAMENTE');
+      console.warn('⚠️ ========================================');
+      console.warn('⚠️ El servidor no puede conectarse a servicios SMTP.');
+      console.warn('⚠️ Esto suele ocurrir cuando:');
+      console.warn('⚠️   - El firewall del servidor bloquea puertos SMTP (25, 587, 465)');
+      console.warn('⚠️   - Estás en Railway/Render/Heroku sin configuración SMTP');
+      console.warn('⚠️');
+      console.warn('⚠️ SOLUCIÓN: Configura credenciales de Gmail en .env');
+      console.warn('⚠️ Ver guía: CONFIGURAR_EMAIL.md');
+      console.warn('⚠️ ========================================');
+      console.warn('');
+
+      // Marcar servicio como desactivado
+      this.disabled = true;
+      this.transporter = null;
     }
   }
 
@@ -73,6 +104,12 @@ export class EmailService {
     try {
       // Esperar a que el transporter esté listo
       await this.ensureReady();
+
+      // Si el servicio está desactivado, retornar éxito silencioso
+      if (this.disabled) {
+        console.log('ℹ️ Email service desactivado - omitiendo envío de email');
+        return { success: true, disabled: true, message: 'Email service disabled' };
+      }
 
       if (!userEmail) {
         console.warn('⚠️ No se proporcionó email de usuario');
@@ -206,6 +243,12 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
       // Esperar a que el transporter esté listo
       await this.ensureReady();
 
+      // Si el servicio está desactivado, retornar éxito silencioso
+      if (this.disabled) {
+        console.log('ℹ️ Email service desactivado - omitiendo envío de email de error');
+        return { success: true, disabled: true, message: 'Email service disabled' };
+      }
+
       if (!userEmail) {
         console.warn('⚠️ No se proporcionó email de usuario');
         return { success: false, message: 'No email provided' };
@@ -285,6 +328,12 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
     try {
       // Esperar a que el transporter esté listo
       await this.ensureReady();
+
+      // Si el servicio está desactivado, retornar false
+      if (this.disabled) {
+        console.log('ℹ️ Email service desactivado');
+        return false;
+      }
 
       await this.transporter.verify();
       console.log('✅ Servidor de email listo');
