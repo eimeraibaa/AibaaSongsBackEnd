@@ -72,6 +72,9 @@ export class EmailService {
   async sendSongsReadyEmail(userEmail, songs, orderId) {
     try {
       // Esperar a que el transporter esté listo
+
+      console.warn('Intentaremos hacer el primer paso!');
+
       await this.ensureReady();
 
       if (!userEmail) {
