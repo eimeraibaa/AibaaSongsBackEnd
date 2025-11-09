@@ -169,7 +169,7 @@ export class DatabaseStorage {
       status,
       previewUrl,
       lyrics,
-      emtion,
+      emotion,
       finalUrl,
       createdAt,
     });
