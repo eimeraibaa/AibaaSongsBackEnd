@@ -49,6 +49,12 @@ export const CartItem = sequelize.define(
     type: DataTypes.TEXT,
     allowNull: true, // processing, completed, delivered
     },
+    language: {
+      type: DataTypes.STRING(2),
+      allowNull: true,
+      defaultValue: 'es',
+      comment: 'Idioma detectado de las letras: es (español) o en (inglés)'
+    },
     price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,

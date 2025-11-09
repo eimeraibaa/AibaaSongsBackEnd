@@ -155,6 +155,7 @@ export class DatabaseStorage {
     status = "processing",
     previewUrl = null,
     lyrics,
+    language = 'es',
     emotion,
     finalUrl = null,
     createdAt = new Date(),
@@ -169,6 +170,7 @@ export class DatabaseStorage {
       status,
       previewUrl,
       lyrics,
+      language,
       emotion,
       finalUrl,
       createdAt,
@@ -245,23 +247,23 @@ export class DatabaseStorage {
         throw new Error("Cart item no encontrado");
       }
 
-      // 2. Generar letras con IA
-      const lyrics = await generateLyrics(
+      // 2. Generar letras con IA (ahora retorna { lyrics, language })
+      const result = await generateLyrics(
         cartItem.prompt,
         cartItem.genres,
         cartItem.dedicatedTo,
-        cartItem.singerGender,
         cartItem.favoriteMemory,
         cartItem.whatYouLikeMost,
-        CartItem.emotion,
-        CartItem.occasionm,
+        cartItem.emotion,
+        cartItem.occasion,
         cartItem.singerGender
       );
 
-      // 3. Actualizar el cart item con las letras generadas
+      // 3. Actualizar el cart item con las letras generadas y el idioma detectado
       await CartItem.update(
         {
-          lyrics,
+          lyrics: result.lyrics,
+          language: result.language, // Guardar el idioma detectado
           status: "lyrics_ready", // Actualizar estado
         },
         { where: { id: cartItemId } }
@@ -423,6 +425,20 @@ export class DatabaseStorage {
       return await Song.findByPk(songId);
     } catch (error) {
       console.error("Error actualizando sunoSongId de canción:", error);
+      throw error;
+    }
+  }
+
+  async updateSongTitle(songId, title) {
+    try {
+      await Song.update(
+        { title },
+        { where: { id: songId } }
+      );
+
+      return await Song.findByPk(songId);
+    } catch (error) {
+      console.error("Error actualizando título de canción:", error);
       throw error;
     }
   }
