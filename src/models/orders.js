@@ -83,7 +83,7 @@ export const OrderItem = sequelize.define('OrderItem', {
   },
   singerGender: {
     type: DataTypes.STRING(10),
-    allowNull: false,
+    allowNull: true,
     validate: {
       isIn: [['male', 'female']]
     }
