@@ -157,6 +157,7 @@ export class DatabaseStorage {
     lyrics,
     language = 'es',
     emotion,
+    singerGender,
     finalUrl = null,
     createdAt = new Date(),
   }) {
@@ -172,6 +173,7 @@ export class DatabaseStorage {
       lyrics,
       language,
       emotion,
+      singerGender,
       finalUrl,
       createdAt,
     });

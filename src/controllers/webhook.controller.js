@@ -147,6 +147,7 @@ async function handlePaymentSuccess(paymentIntent) {
         lyrics: cartItem.lyrics, // 🔑 CRÍTICO: Copiar las letras del cart
         language: cartItem.language || 'es', // 🌐 Copiar el idioma detectado
         price: cartItem.price,
+        singerGender: cartItem.singerGender || null,
         status: 'processing',
       });
     });
