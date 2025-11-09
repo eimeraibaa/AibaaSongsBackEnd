@@ -157,7 +157,7 @@ export class DatabaseStorage {
     lyrics,
     language = 'es',
     emotion,
-    singerGender,
+    singerGender = 'male',
     finalUrl = null,
     createdAt = new Date(),
   }) {

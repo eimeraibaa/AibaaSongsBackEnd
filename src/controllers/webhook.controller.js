@@ -146,6 +146,7 @@ async function handlePaymentSuccess(paymentIntent) {
         genres: cartItem.genres,
         lyrics: cartItem.lyrics, // 🔑 CRÍTICO: Copiar las letras del cart
         language: cartItem.language || 'es', // 🌐 Copiar el idioma detectado
+        singerGender: cartItem.singerGender || 'male', // 🎤 Copiar el género del cantante
         price: cartItem.price,
         singerGender: cartItem.singerGender || null,
         status: 'processing',
