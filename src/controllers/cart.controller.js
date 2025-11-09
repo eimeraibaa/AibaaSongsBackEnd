@@ -234,8 +234,9 @@ export const checkoutCart = async (req, res) => {
         pi.metadata.cartItemIds === cartItemIds &&
         pi.metadata.userId === req.user.id.toString() &&
         pi.metadata.type === 'cart_checkout' &&
-        // Solo reutilizar si está en un estado activo (no finalizado)
-        !['succeeded', 'canceled'].includes(pi.status)
+        // Solo reutilizar si está en estado requires_confirmation (pendiente de confirmación)
+        // Excluimos succeeded, canceled, requires_payment_method (falló), processing, etc.
+        pi.status === 'requires_confirmation'
       );
 
       if (matchingIntent) {
