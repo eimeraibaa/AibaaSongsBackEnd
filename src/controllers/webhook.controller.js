@@ -102,6 +102,7 @@ async function handlePaymentSuccess(paymentIntent) {
     for (const itemId of itemIds) {
       const item = await storage.getCartItemById(itemId);
       if (item) {
+        console.log(`📊 CartItem ${itemId}: language=${item.language || 'N/A'}`);
         cartItems.push(item);
       }
     }
@@ -139,6 +140,7 @@ async function handlePaymentSuccess(paymentIntent) {
     // 4. Crear OrderItems con las letras del cart
     console.log('📝 Creando order items...');
     const orderItemPromises = cartItems.map(cartItem => {
+      console.log(`📝 Creando OrderItem para cartItem ${cartItem.id}: language=${cartItem.language || 'es'}`);
       return storage.createOrderItem({
         orderId: order.id,
         dedicatedTo: cartItem.dedicatedTo,
@@ -155,6 +157,9 @@ async function handlePaymentSuccess(paymentIntent) {
 
     const orderItems = await Promise.all(orderItemPromises);
     console.log('✅ Order items creados:', orderItems.length);
+    orderItems.forEach((item, i) => {
+      console.log(`   ${i + 1}. OrderItem ID: ${item.id}, Language: ${item.language || 'N/A'}`);
+    });
 
     // 5. Limpiar el cart del usuario
     console.log('🧹 Limpiando cart del usuario...');

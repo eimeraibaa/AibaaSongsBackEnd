@@ -296,6 +296,9 @@ export class DatabaseStorage {
 
   async createSong(orderItemId, songData) {
     try {
+      console.log(`🎵 [createSong] Creando canción para orderItemId: ${orderItemId}`);
+      console.log(`📊 [createSong] Language recibido: ${songData.language || 'N/A'}`);
+
       const song = await Song.create({
         orderItemId,
         title: songData.title,
@@ -304,10 +307,13 @@ export class DatabaseStorage {
         imageUrl: songData.imageUrl,
         sunoSongId: songData.sunoSongId,
         genre: songData.genre,
+        language: songData.language || 'es', // 🌐 Guardar idioma
+        variation: songData.variation || 1,
         status: "generating", // Inicialmente en estado de generación
         createdAt: new Date(),
       });
 
+      console.log(`✅ [createSong] Canción creada: ID ${song.id}, Language guardado: ${song.language}`);
       return song;
     } catch (error) {
       console.error("Error creando canción:", error);
@@ -400,7 +406,7 @@ export class DatabaseStorage {
 
       console.log(`📊 [getOrderSongs] Encontradas ${songs.length} canción(es) para orden ${orderId}`);
       songs.forEach((song, i) => {
-        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, Variation: ${song.variation || 1}, OrderItemId: ${song.orderItemId}`);
+        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, Variation: ${song.variation || 1}, Language: ${song.language || 'N/A'}, OrderItemId: ${song.orderItemId}`);
       });
 
       return songs;
@@ -509,6 +515,7 @@ export class DatabaseStorage {
           status: itemJson.status,
           singerGender: itemJson.singerGender || null,
           lyrics: itemJson.lyrics || null, // Las letras YA están en el order item
+          language: itemJson.language || 'es', // 🌐 Idioma de las letras
         };
       });
 
@@ -520,6 +527,7 @@ export class DatabaseStorage {
           hasLyrics: !!item.lyrics,
           lyricsLength: item.lyrics?.length || 0,
           lyricsPreview: item.lyrics?.substring(0, 50) || "sin letras",
+          language: item.language || 'N/A',
         }))
       );
 
