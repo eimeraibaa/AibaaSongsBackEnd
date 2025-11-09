@@ -87,7 +87,7 @@ export class ResendEmailService {
       console.log(`📧 Enviando email de canciones listas a: ${userEmail}`);
       console.log(`📊 Total canciones recibidas para email: ${songs.length}`);
       songs.forEach((song, i) => {
-        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, OrderItemId: ${song.orderItemId}, Variation: ${song.variation || 1}`);
+        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, Language: ${song.language || 'N/A'}, OrderItemId: ${song.orderItemId}, Variation: ${song.variation || 1}`);
       });
 
       // Detectar el idioma predominante de las canciones
@@ -97,6 +97,7 @@ export class ResendEmailService {
         return acc;
       }, {});
 
+      console.log(`📊 Conteo de idiomas:`, languageCounts);
       const detectedLanguage = languageCounts.en > (languageCounts.es || 0) ? 'en' : 'es';
       console.log(`🌐 Idioma detectado para el email: ${detectedLanguage === 'en' ? 'Inglés' : 'Español'}`);
 
