@@ -459,6 +459,16 @@ export const handleSunoWebhook = async (req, res) => {
     console.log('✅ Webhook "complete" recibido - procesando canciones...');
     console.log(`📊 Total canciones en webhook: ${songsData.length}`);
 
+    // Buscar la canción base UNA VEZ antes del loop
+    const baseSong = await storage.getSongBySunoId(taskId);
+
+    if (!baseSong) {
+      console.error(`❌ No se encontró canción base con taskId ${taskId}`);
+      return res.status(200).json({ received: true, error: 'Song not found' });
+    }
+
+    console.log(`✅ Canción base encontrada: ID ${baseSong.id}, OrderItemId: ${baseSong.orderItemId}, Title: ${baseSong.title}`);
+
     // Track de canciones procesadas y órdenes afectadas
     let processedCount = 0;
     let variationsCreated = 0;
@@ -472,34 +482,28 @@ export const handleSunoWebhook = async (req, res) => {
         const variationNumber = i + 1; // V1, V2, V3...
 
         console.log(`🎵 Procesando canción ${variationNumber}/${songsData.length} de Suno: ${sunoSongId}`);
-        console.log(`📋 TaskId del webhook: ${taskId}`);
-
-        // Buscar la canción en nuestra base de datos por taskId
-        // El taskId se guarda en sunoSongId al crear la canción
-        let song = await storage.getSongBySunoId(taskId);
-
-        if (!song) {
-          console.warn(`⚠️ No se encontró canción con taskId ${taskId} - esto no debería pasar`);
-          continue;
-        }
-
-        console.log(`✅ Canción base encontrada en BD: ID ${song.id}`);
-        console.log(`   Estado actual: ${song.status}, Variación: ${song.variation || 1}`);
 
         // Si es la primera variación (i=0), actualizar la canción existente
         // Si es una variación adicional (i>0), crear una nueva Song
+        let song;
         if (i > 0) {
           console.log(`🎵 Creando variación ${variationNumber} de la canción`);
 
+          // Verificar que haya audio_url
+          if (!audio_url || audio_url.trim() === '') {
+            console.warn(`⚠️ Variación ${variationNumber} sin audio_url - omitiendo`);
+            continue;
+          }
+
           // Crear nueva canción como variación
-          song = await storage.createSong(song.orderItemId, {
-            title: `${song.title} (V${variationNumber})`,
-            lyrics: song.lyrics,
+          song = await storage.createSong(baseSong.orderItemId, {
+            title: `${baseSong.title.replace(/\s*\(V\d+\)/, '')} (V${variationNumber})`,
+            lyrics: baseSong.lyrics,
             audioUrl: audio_url,
             imageUrl: image_url,
             sunoSongId: sunoSongId, // Guardar el ID específico de esta variación
-            genre: song.genre,
-            language: song.language || 'es', // 🌐 Copiar el idioma de la canción base
+            genre: baseSong.genre,
+            language: baseSong.language || 'es', // 🌐 Copiar el idioma de la canción base
             variation: variationNumber
           });
 
@@ -518,33 +522,32 @@ export const handleSunoWebhook = async (req, res) => {
           }
 
           // Actualizar título con V1
-          if (!song.title.includes('(V1)')) {
-            await storage.updateSongTitle(song.id, `${song.title} (V1)`);
+          if (!baseSong.title.includes('(V1)')) {
+            await storage.updateSongTitle(baseSong.id, `${baseSong.title} (V1)`);
           }
 
           // Actualizar la canción con la URL del audio
-          await storage.updateSongStatus(song.id, 'completed', audio_url);
+          await storage.updateSongStatus(baseSong.id, 'completed', audio_url);
 
           // Actualizar también la imagen si viene
-          if (image_url && song.imageUrl !== image_url) {
-            await storage.updateSongImage(song.id, image_url);
+          if (image_url && baseSong.imageUrl !== image_url) {
+            await storage.updateSongImage(baseSong.id, image_url);
           }
 
           // Actualizar el sunoSongId específico
-          if (song.sunoSongId !== sunoSongId) {
-            await storage.updateSongSunoId(song.id, sunoSongId);
+          if (baseSong.sunoSongId !== sunoSongId) {
+            await storage.updateSongSunoId(baseSong.id, sunoSongId);
           }
 
-          console.log(`✅ Canción V1 actualizada: ID ${song.id}`);
+          console.log(`✅ Canción V1 actualizada: ID ${baseSong.id}`);
+          song = baseSong;
         }
 
         processedCount++;
 
         // Rastrear la orden afectada para notificar al final
-        const orderItem = await storage.getOrderItemById(song.orderItemId);
-        if (orderItem) {
-          affectedOrders.add(orderItem.orderId);
-        }
+        affectedOrders.add(baseSong.orderItemId ?
+          (await storage.getOrderItemById(baseSong.orderItemId))?.orderId : null);
 
       } catch (error) {
         console.error('❌ Error procesando canción del webhook:', error);
