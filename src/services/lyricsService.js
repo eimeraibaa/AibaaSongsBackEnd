@@ -42,11 +42,11 @@ ${singerGender ? `
 ${singerGender}
 ` : ''}
 
-Por favor genera letras que:  
-Please generate lyrics that:
-
-- Se adapten automáticamente al *género musical seleccionado*, ajustando la estructura, ritmo, tono y duración según el estilo.  
-  Automatically adapt to the *selected musical genre*, adjusting structure, rhythm, tone, and duration accordingly.  
+Por favor genera letras que / Please generate lyrics that:
+- *Mencionen explícitamente la ocasión* indicada *al menos dos veces*:  
+  una en *[VERSO 1]* y otra en *[CORO]* o *[PUENTE]* (usa palabras del tipo: “cumpleaños”, “aniversario”, “graduación”, etc.).  
+  *Explicitly mention the occasion* at least *twice: once in **[VERSE 1], and once in **[CHORUS]* or *[BRIDGE]* (use the actual occasion words).
+- Se adapten automáticamente al *género* (estructura, ritmo, tono y duración). / Auto-adapt to the *genre* (structure, rhythm, tone, duration).
 
 📀 *Guía de géneros / Genre reference guide:*
 | Género / Genre | Duración / Duration | Extensión sugerida / Suggested length | Estilo / Style |
