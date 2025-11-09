@@ -189,7 +189,7 @@ export class ResendEmailService {
         tip3: 'Las canciones estarán disponibles en tu cuenta para siempre',
         tip4: 'Comparte tus canciones con quien quieras 💜',
         footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
-        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA`
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
       };
 
       const htmlContent = `
@@ -558,7 +558,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/history
             </div>
             <div class="footer">
               <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-              <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA</p>
+              <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada</p>
             </div>
           </div>
         </body>
