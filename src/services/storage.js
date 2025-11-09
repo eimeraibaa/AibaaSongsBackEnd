@@ -368,22 +368,29 @@ export class DatabaseStorage {
 
   async getOrderSongs(orderId) {
     try {
+      console.log(`🔍 [getOrderSongs] Buscando canciones para orden ${orderId}`);
+
       // Obtener todas las canciones de una orden específica
       const songs = await Song.findAll({
         include: [
           {
             model: OrderItem,
-            as: 'OrderItem',
             where: { orderId },
             required: true
           }
         ],
-        order: [['createdAt', 'ASC']]
+        order: [['variation', 'ASC'], ['createdAt', 'ASC']]
+      });
+
+      console.log(`📊 [getOrderSongs] Encontradas ${songs.length} canción(es) para orden ${orderId}`);
+      songs.forEach((song, i) => {
+        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, Variation: ${song.variation || 1}, OrderItemId: ${song.orderItemId}`);
       });
 
       return songs;
     } catch (error) {
-      console.error("Error obteniendo canciones de la orden:", error);
+      console.error("❌ Error obteniendo canciones de la orden:", error);
+      console.error("Stack:", error.stack);
       throw error;
     }
   }

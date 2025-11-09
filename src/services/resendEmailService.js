@@ -85,6 +85,10 @@ export class ResendEmailService {
       }
 
       console.log(`📧 Enviando email de canciones listas a: ${userEmail}`);
+      console.log(`📊 Total canciones recibidas para email: ${songs.length}`);
+      songs.forEach((song, i) => {
+        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, OrderItemId: ${song.orderItemId}, Variation: ${song.variation || 1}`);
+      });
 
       // Detectar el idioma predominante de las canciones
       const languageCounts = songs.reduce((acc, song) => {
@@ -105,6 +109,14 @@ export class ResendEmailService {
         acc[key].push(song);
         return acc;
       }, {});
+
+      console.log(`📦 Grupos de canciones por OrderItem:`);
+      Object.entries(songsByOrderItem).forEach(([orderItemId, songsGroup]) => {
+        console.log(`   OrderItem ${orderItemId}: ${songsGroup.length} canción(es)`);
+        songsGroup.forEach((s, i) => {
+          console.log(`      ${i + 1}. ${s.title} (Variation ${s.variation || 1})`);
+        });
+      });
 
       // Detectar el idioma de las letras para los labels del email
       const genreLabel = detectedLanguage === 'en' ? 'Genre' : 'Género';
