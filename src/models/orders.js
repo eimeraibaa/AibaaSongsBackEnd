@@ -91,11 +91,12 @@ export const OrderItem = sequelize.define('OrderItem', {
   emotion: {
     type: DataTypes.TEXT,
     allowNull: true,
+    defaultValue: 'happy',
   },
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    defaultValue: 'happy',
+    defaultValue: '29.99',
   },
   status: {
     type: DataTypes.STRING,
