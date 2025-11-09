@@ -153,6 +153,7 @@ export class DatabaseStorage {
     status = "processing",
     previewUrl = null,
     lyrics,
+    emotion,
     finalUrl = null,
     createdAt = new Date(),
   }) {
@@ -166,6 +167,7 @@ export class DatabaseStorage {
       status,
       previewUrl,
       lyrics,
+      emtion,
       finalUrl,
       createdAt,
     });

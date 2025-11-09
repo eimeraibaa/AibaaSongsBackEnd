@@ -34,7 +34,8 @@ export const generateSongsFromOrder = async (req, res) => {
           item.genres[0] || 'pop',
           item.dedicatedTo || 'Canción Personalizada',
           '', // callbackUrl (vacío para polling)
-          item.singerGender || 'male' // género del cantante
+          item.singerGender || 'male', // género del cantante,
+          item.emotion || 'happy' // emoción de la canción
         );
 
         // 3. Crear registro de canción (inicialmente sin audio URL)

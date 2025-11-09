@@ -46,13 +46,14 @@ export class SunoService {
    * @param {string} title - Título de la canción
    * @param {string} callbackUrl - URL para recibir notificación cuando esté lista (opcional)
    * @param {string} singerGender - Género del cantante: 'male' o 'female' (opcional, default: 'male')
+   * @param {string} emotion - Género del cantante: 'male' o 'female' (opcional, default: 'male')
    * @returns {Promise<Object>} IDs de las canciones generadas
    */
-  async generateSong(lyrics, style = 'pop', title = 'Generated Song', callbackUrl = '', singerGender = 'male') {
+  async generateSong(lyrics, style = 'pop', title = 'Generated Song', callbackUrl = '', singerGender = 'male', emotion) {
     try {
       // Agregar género del cantante al estilo
       const voiceType = singerGender === 'female' ? 'female voice' : 'male voice';
-      const fullStyle = `${style} ${voiceType}`;
+      const fullStyle = `${style} ${voiceType} ${emotion}`;
 
       console.log('🎵 Generando canción con Suno AI...');
       console.log(`📊 Parámetros: style="${fullStyle}", title="${title}", singerGender="${singerGender}", callbackUrl="${callbackUrl}"`);
