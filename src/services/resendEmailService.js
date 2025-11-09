@@ -192,8 +192,7 @@ export class ResendEmailService {
               </div>
 
               <div class="button-container">
-                <a href="${FRONTEND_URL}/orders/${orderId}" class="button">Ver mi orden completa</a>
-                <a href="${FRONTEND_URL}/songs" class="button">Ver todas mis canciones</a>
+                <a href="${FRONTEND_URL}/history" class="button">Ver todas mis canciones</a>
               </div>
 
               <div class="tips">
