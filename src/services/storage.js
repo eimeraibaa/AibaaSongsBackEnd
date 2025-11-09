@@ -56,6 +56,7 @@ export class DatabaseStorage {
     favoriteMemory,
     whatYouLikeMost,
     userEmail,
+    occasion,
     price = 29.99,
     status = "draft",
   }) {
@@ -71,6 +72,7 @@ export class DatabaseStorage {
       favoriteMemory,
       whatYouLikeMost,
       userEmail,
+      occasion,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
