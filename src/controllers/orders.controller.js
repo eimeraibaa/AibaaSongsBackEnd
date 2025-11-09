@@ -33,7 +33,50 @@ export const createOrderItem = async (req, res) => {
     console.log('language is undefined?:', req.body.language === undefined);
     console.log('========================================');
 
-    const orderItem = await storage.createOrderItem(req.body);
+    // 🔧 FIX: Si el frontend NO envía language, intentar obtenerlo del CartItem
+    let languageToUse = req.body.language;
+
+    if (!languageToUse && req.body.orderId && req.body.prompt) {
+      console.log('⚠️ Language no proporcionado, buscando CartItem asociado...');
+
+      try {
+        // Obtener el userId de la orden
+        const order = await storage.getOrderById(req.body.orderId);
+        if (order) {
+          console.log(`📦 Orden encontrada: userId=${order.userId}`);
+
+          // Buscar CartItem con el mismo prompt del usuario
+          const cartItems = await storage.getUserCartItems(order.userId);
+          const matchingCartItem = cartItems.find(item => item.prompt === req.body.prompt);
+
+          if (matchingCartItem) {
+            languageToUse = matchingCartItem.language;
+            console.log(`✅ CartItem encontrado: language="${languageToUse}"`);
+          } else {
+            console.log('⚠️ No se encontró CartItem con ese prompt');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error buscando CartItem:', error.message);
+      }
+    }
+
+    // Si aún no tenemos language, usar 'es' como fallback
+    if (!languageToUse) {
+      languageToUse = 'es';
+      console.log('⚠️ Usando fallback: language="es"');
+    }
+
+    console.log(`📊 Language final a usar: "${languageToUse}"`);
+    console.log('========================================');
+
+    // Crear OrderItem con el language correcto
+    const orderItemData = {
+      ...req.body,
+      language: languageToUse  // Sobrescribir con el valor correcto
+    };
+
+    const orderItem = await storage.createOrderItem(orderItemData);
 
     console.log('✅ OrderItem creado desde endpoint REST');
     console.log('   - OrderItem.id:', orderItem.id);
