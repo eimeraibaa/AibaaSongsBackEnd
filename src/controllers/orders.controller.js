@@ -23,7 +23,23 @@ export const createOrder = async (req, res) => {
 
 export const createOrderItem = async (req, res) => {
   try {
+    console.log('========================================');
+    console.log('📝 [POST /orders/createOrderItem] Request recibida');
+    console.log('========================================');
+    console.log('Body completo:', JSON.stringify(req.body, null, 2));
+    console.log('language en body:', req.body.language);
+    console.log('language type:', typeof req.body.language);
+    console.log('language is null?:', req.body.language === null);
+    console.log('language is undefined?:', req.body.language === undefined);
+    console.log('========================================');
+
     const orderItem = await storage.createOrderItem(req.body);
+
+    console.log('✅ OrderItem creado desde endpoint REST');
+    console.log('   - OrderItem.id:', orderItem.id);
+    console.log('   - OrderItem.language:', orderItem.language);
+    console.log('========================================');
+
     res.json({ success: true, item : orderItem });
   } catch (error) {
     console.error('Error creating order item:', error);
