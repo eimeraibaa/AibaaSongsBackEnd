@@ -27,7 +27,7 @@ SongRequest.hasMany(OrderItem, { foreignKey: "songRequestId" });
 OrderItem.belongsTo(SongRequest, { foreignKey: "songRequestId" });
 
 Song.belongsTo(OrderItem, { foreignKey: "orderItemId" });
-OrderItem.hasOne(Song, { foreignKey: "orderItemId" });
+OrderItem.hasMany(Song, { foreignKey: "orderItemId", as: "songs" });
 
 OrderItem.belongsTo(SongRequest, {foreignKey: "songRequestId",as: "songRequest",
 });
