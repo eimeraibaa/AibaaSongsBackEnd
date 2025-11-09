@@ -86,6 +86,16 @@ export class ResendEmailService {
 
       console.log(`📧 Enviando email de canciones listas a: ${userEmail}`);
 
+      // Detectar el idioma predominante de las canciones
+      const languageCounts = songs.reduce((acc, song) => {
+        const lang = song.language || 'es';
+        acc[lang] = (acc[lang] || 0) + 1;
+        return acc;
+      }, {});
+
+      const detectedLanguage = languageCounts.en > (languageCounts.es || 0) ? 'en' : 'es';
+      console.log(`🌐 Idioma detectado para el email: ${detectedLanguage === 'en' ? 'Inglés' : 'Español'}`);
+
       // Agrupar canciones por orderItemId para mostrar variaciones juntas
       const songsByOrderItem = songs.reduce((acc, song) => {
         const key = song.orderItemId || 'unknown';
@@ -96,44 +106,91 @@ export class ResendEmailService {
         return acc;
       }, {});
 
+      // Detectar el idioma de las letras para los labels del email
+      const genreLabel = detectedLanguage === 'en' ? 'Genre' : 'Género';
+      const noTitleLabel = detectedLanguage === 'en' ? 'Untitled Song' : 'Canción sin título';
+      const variationsLabel = detectedLanguage === 'en' ? 'variations available' : 'variaciones disponibles';
+      const listenLabel = detectedLanguage === 'en' ? 'Listen' : 'Escuchar';
+      const downloadLabel = detectedLanguage === 'en' ? 'Download' : 'Descargar';
+      const processingLabel = detectedLanguage === 'en' ? 'Audio in process...' : 'Audio en proceso...';
+
       // Generar HTML para cada grupo de canciones
       const songsList = Object.values(songsByOrderItem).map(songGroup => {
         // Ordenar por variación (V1, V2, V3...)
         songGroup.sort((a, b) => (a.variation || 1) - (b.variation || 1));
 
         const baseSong = songGroup[0];
-        const baseTitle = baseSong.title?.replace(/\s*\(V\d+\)/, '') || 'Canción sin título';
+        const baseTitle = baseSong.title?.replace(/\s*\(V\d+\)/, '') || noTitleLabel;
 
         return `
         <li style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #eee;">
           <strong style="font-size: 17px; color: #333; display: block; margin-bottom: 8px;">${baseTitle}</strong>
-          <small style="color: #666; display: block; margin-bottom: 10px;">Género: ${baseSong.genre || 'N/A'}</small>
+          <small style="color: #666; display: block; margin-bottom: 10px;">${genreLabel}: ${baseSong.genre || 'N/A'}</small>
           ${songGroup.length > 1 ? `
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 8px;">
-              <small style="color: #888; display: block; margin-bottom: 8px;">🎵 ${songGroup.length} variaciones disponibles:</small>
+              <small style="color: #888; display: block; margin-bottom: 8px;">🎵 ${songGroup.length} ${variationsLabel}:</small>
               ${songGroup.map(song => `
                 <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px;">
                   <strong style="color: #555; font-size: 14px;">${song.title}</strong><br>
                   ${song.audioUrl && song.id ? `
-                    <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 12px; font-size: 13px;">🎵 Escuchar</a>
-                    <a href="${BACKEND_URL}/song/${song.id}/download" style="color: #e69216; text-decoration: none; font-size: 13px;">📥 Descargar</a>
+                    <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 12px; font-size: 13px;">🎵 ${listenLabel}</a>
+                    <a href="${BACKEND_URL}/song/${song.id}/download" style="color: #e69216; text-decoration: none; font-size: 13px;">📥 ${downloadLabel}</a>
                   ` : `
-                    <span style="color: #999; font-size: 13px;">Audio en proceso...</span>
+                    <span style="color: #999; font-size: 13px;">${processingLabel}</span>
                   `}
                 </div>
               `).join('')}
             </div>
           ` : `
             ${baseSong.audioUrl && baseSong.id ? `
-              <a href="${baseSong.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 15px;">🎵 Escuchar</a>
-              <a href="${BACKEND_URL}/song/${baseSong.id}/download" style="color: #e69216; text-decoration: none;">📥 Descargar</a>
+              <a href="${baseSong.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 15px;">🎵 ${listenLabel}</a>
+              <a href="${BACKEND_URL}/song/${baseSong.id}/download" style="color: #e69216; text-decoration: none;">📥 ${downloadLabel}</a>
             ` : `
-              <span style="color: #999;">Audio en proceso...</span>
+              <span style="color: #999;">${processingLabel}</span>
             `}
           `}
         </li>
       `;
       }).join('');
+
+      // Textos según el idioma
+      const texts = detectedLanguage === 'en' ? {
+        title: '🎵 Your songs are ready!',
+        orderLabel: 'Your order',
+        greeting: 'Hello! 👋',
+        intro: `We're excited to inform you that your <strong>${songs.length} personalized song${songs.length > 1 ? 's have' : ' has'}</strong> been successfully generated.`,
+        songsTitle: 'Your songs:',
+        variationsLabel: 'variations available',
+        listenLink: 'Listen',
+        downloadLink: 'Download',
+        audioProcessing: 'Audio in process...',
+        viewAllButton: 'View all my songs',
+        tipsTitle: 'Tips:',
+        tip1: 'Click "Listen" to play the song in your browser',
+        tip2: 'Click "Download" to save the MP3 file directly to your device',
+        tip3: 'Your songs will be available in your account forever',
+        tip4: 'Share your songs with whoever you want 💜',
+        footerText: 'This is an automated email, please do not reply to this message.',
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music with AI`
+      } : {
+        title: '🎵 ¡Tus canciones están listas!',
+        orderLabel: 'Tu orden',
+        greeting: '¡Hola! 👋',
+        intro: `Estamos emocionados de informarte que ${songs.length > 1 ? 'tus' : 'tu'} <strong>${songs.length} cancion${songs.length > 1 ? 'es' : ''} personalizada${songs.length > 1 ? 's han' : ' ha'}</strong> sido generada${songs.length > 1 ? 's' : ''} con éxito.`,
+        songsTitle: 'Tus canciones:',
+        variationsLabel: 'variaciones disponibles',
+        listenLink: 'Escuchar',
+        downloadLink: 'Descargar',
+        audioProcessing: 'Audio en proceso...',
+        viewAllButton: 'Ver todas mis canciones',
+        tipsTitle: 'Consejos:',
+        tip1: 'Haz clic en "Escuchar" para reproducir la canción en tu navegador',
+        tip2: 'Haz clic en "Descargar" para guardar el archivo MP3 directamente en tu equipo',
+        tip3: 'Las canciones estarán disponibles en tu cuenta para siempre',
+        tip4: 'Comparte tus canciones con quien quieras 💜',
+        footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA`
+      };
 
       const htmlContent = `
         <!DOCTYPE html>
@@ -251,44 +308,61 @@ export class ResendEmailService {
         <body>
           <div class="container">
             <div class="header">
-              <h1>🎵 ¡Tus canciones están listas!</h1>
-              <p>Tu orden #${orderId} ha sido completada</p>
+              <h1>${texts.title}</h1>
+              <p>${texts.orderLabel} #${orderId}</p>
             </div>
             <div class="content">
-              <p style="font-size: 16px;">¡Hola! 👋</p>
-              <p style="font-size: 15px;">Estamos emocionados de informarte que tus <strong>${songs.length} cancion${songs.length > 1 ? 'es' : ''} personalizada${songs.length > 1 ? 's' : ''}</strong> ha${songs.length > 1 ? 'n' : ''} sido generada${songs.length > 1 ? 's' : ''} con éxito.</p>
+              <p style="font-size: 16px;">${texts.greeting}</p>
+              <p style="font-size: 15px;">${texts.intro}</p>
 
               <div class="song-list">
-                <h3>Tus canciones:</h3>
+                <h3>${texts.songsTitle}</h3>
                 <ul>
                   ${songsList}
                 </ul>
               </div>
 
               <div class="button-container">
-                <a href="${FRONTEND_URL}/history" class="button">Ver todas mis canciones</a>
+                <a href="${FRONTEND_URL}/history" class="button">${texts.viewAllButton}</a>
               </div>
 
               <div class="tips">
-                <strong>💡 Consejos:</strong>
+                <strong>💡 ${texts.tipsTitle}</strong>
                 <ul>
-                  <li>Haz clic en "Escuchar" para reproducir la canción en tu navegador</li>
-                  <li>Haz clic en "Descargar" para guardar el archivo MP3 directamente en tu equipo</li>
-                  <li>Las canciones estarán disponibles en tu cuenta para siempre</li>
-                  <li>Comparte tus canciones con quien quieras 💜</li>
+                  <li>${texts.tip1}</li>
+                  <li>${texts.tip2}</li>
+                  <li>${texts.tip3}</li>
+                  <li>${texts.tip4}</li>
                 </ul>
               </div>
             </div>
             <div class="footer">
-              <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-              <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA</p>
+              <p>${texts.footerText}</p>
+              <p>${texts.footerCopyright}</p>
             </div>
           </div>
         </body>
         </html>
       `;
 
-      const textContent = `
+      const textContent = detectedLanguage === 'en' ? `
+Hello!
+
+Your ${songs.length} personalized song${songs.length > 1 ? 's are' : ' is'} ready!
+
+Order #${orderId}
+
+Your songs:
+${songs.map(s => `- ${s.title || 'Untitled'} (${s.genre || 'N/A'})
+  ${s.audioUrl && s.id ? `🎵 Listen: ${s.audioUrl}
+  📥 Download: ${BACKEND_URL}/song/${s.id}/download` : 'Audio in process...'}`).join('\n\n')}
+
+View all my songs: ${FRONTEND_URL}/history
+
+Enjoy your music!
+
+© ${new Date().getFullYear()} Make Ur Songs
+      `.trim() : `
 ¡Hola!
 
 ¡Tus ${songs.length} cancion${songs.length > 1 ? 'es' : ''} personalizada${songs.length > 1 ? 's' : ''} está${songs.length > 1 ? 'n' : ''} lista${songs.length > 1 ? 's' : ''}!
@@ -300,18 +374,22 @@ ${songs.map(s => `- ${s.title || 'Sin título'} (${s.genre || 'N/A'})
   ${s.audioUrl && s.id ? `🎵 Escuchar: ${s.audioUrl}
   📥 Descargar: ${BACKEND_URL}/song/${s.id}/download` : 'Audio en proceso...'}`).join('\n\n')}
 
-Ver orden completa: ${FRONTEND_URL}/orders/${orderId}
-Ver todas mis canciones: ${FRONTEND_URL}/songs
+Ver todas mis canciones: ${FRONTEND_URL}/history
 
 ¡Disfruta tu música!
 
 © ${new Date().getFullYear()} Make Ur Songs
       `.trim();
 
-      const { data, error } = await this.resend.emails.send({
+      // Configurar subject según el idioma
+      const subject = detectedLanguage === 'en'
+        ? '🎉 Your personalized songs are ready!'
+        : '🎉 ¡Tus canciones personalizadas están listas!';
+
+      const { data, error} = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
-        subject: '🎉 ¡Tus canciones personalizadas están listas!',
+        subject,
         html: htmlContent,
         text: textContent,
       });

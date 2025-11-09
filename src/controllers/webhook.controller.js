@@ -145,6 +145,7 @@ async function handlePaymentSuccess(paymentIntent) {
         prompt: cartItem.prompt,
         genres: cartItem.genres,
         lyrics: cartItem.lyrics, // 🔑 CRÍTICO: Copiar las letras del cart
+        language: cartItem.language || 'es', // 🌐 Copiar el idioma detectado
         price: cartItem.price,
         status: 'processing',
       });
@@ -224,6 +225,7 @@ async function generateSongsForOrder(orderId) {
           audioUrl: null, // Se actualizará cuando esté listo
           sunoSongId: sunoResult.songIds[0], // Puede ser taskId si usa webhook
           genre: item.genres[0] || 'pop',
+          language: item.language || 'es', // 🌐 Idioma de las letras
         });
 
         console.log(`✅ Canción creada con ID: ${song.id}, Suno ID: ${sunoResult.songIds[0]}`);
@@ -497,6 +499,7 @@ export const handleSunoWebhook = async (req, res) => {
             imageUrl: image_url,
             sunoSongId: sunoSongId, // Guardar el ID específico de esta variación
             genre: song.genre,
+            language: song.language || 'es', // 🌐 Copiar el idioma de la canción base
             variation: variationNumber
           });
 

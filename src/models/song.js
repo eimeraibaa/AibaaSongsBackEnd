@@ -48,5 +48,11 @@ export const Song = sequelize.define('Song', {
     allowNull: true,
     defaultValue: 1,
     comment: 'Número de variación (1, 2, etc.) cuando Suno genera múltiples versiones'
+  },
+  language: {
+    type: DataTypes.STRING(2),
+    allowNull: true,
+    defaultValue: 'es',
+    comment: 'Idioma de las letras: es (español) o en (inglés)'
   }
 });
