@@ -215,6 +215,20 @@ export class DatabaseStorage {
     return updated; // o null si no existía
   }
 
+  async updateOrderItemUrls(orderItemId, { previewUrl, finalUrl }) {
+    try {
+      const updateData = {};
+      if (previewUrl !== undefined) updateData.previewUrl = previewUrl;
+      if (finalUrl !== undefined) updateData.finalUrl = finalUrl;
+
+      await OrderItem.update(updateData, { where: { id: orderItemId } });
+      return await OrderItem.findByPk(orderItemId);
+    } catch (error) {
+      console.error("Error actualizando URLs de order item:", error);
+      throw error;
+    }
+  }
+
   async checkIfSongAlreadyPaid(userId, prompt) {
     const item = await OrderItem.findOne({
       where: { prompt },

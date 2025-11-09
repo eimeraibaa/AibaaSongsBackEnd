@@ -517,6 +517,14 @@ export const handleSunoWebhook = async (req, res) => {
           // Primera variación: actualizar la canción existente
           console.log(`🔄 Actualizando canción original (V1)`);
 
+          // Actualizar URLs en order_items para la primera variación
+          console.log(`🔄 Actualizando previewUrl y finalUrl en order_item ${baseSong.orderItemId}`);
+          await storage.updateOrderItemUrls(baseSong.orderItemId, {
+            previewUrl: image_url || null,
+            finalUrl: audio_url || null
+          });
+          console.log(`✅ URLs actualizados en order_item ${baseSong.orderItemId}`);
+
           // Verificar que haya audio_url
           if (!audio_url || audio_url.trim() === '') {
             console.warn(`⚠️ Canción ${sunoSongId} sin audio_url - omitiendo actualización`);
