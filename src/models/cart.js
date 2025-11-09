@@ -32,7 +32,6 @@ export const CartItem = sequelize.define(
     singerGender: {
       type: DataTypes.STRING(10),
       allowNull: false,
-      defaultValue: 'male',
       validate: {
         isIn: [['male', 'female']]
       }
@@ -61,6 +60,11 @@ export const CartItem = sequelize.define(
       defaultValue: null
     },
     whatYouLikeMost: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null
+    },
+    occasion: {
       type: DataTypes.TEXT,
       allowNull: true,
       defaultValue: null

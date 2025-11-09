@@ -249,7 +249,9 @@ export class DatabaseStorage {
         cartItem.singerGender,
         cartItem.favoriteMemory,
         cartItem.whatYouLikeMost,
-        CartItem.emotion
+        CartItem.emotion,
+        CartItem.occasionm,
+        cartItem.singerGender
       );
 
       // 3. Actualizar el cart item con las letras generadas
