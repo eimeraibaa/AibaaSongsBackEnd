@@ -513,6 +513,12 @@ export class DatabaseStorage {
       const itemsData = orderItems.map((item) => {
         const itemJson = item.toJSON();
 
+        console.log(`📦 [getOrderItemsWithLyrics] OrderItem ${itemJson.id} RAW:`);
+        console.log(`   - language value: "${itemJson.language}"`);
+        console.log(`   - language type: ${typeof itemJson.language}`);
+        console.log(`   - is null?: ${itemJson.language === null}`);
+        console.log(`   - is undefined?: ${itemJson.language === undefined}`);
+
         return {
           id: itemJson.id,
           orderId: itemJson.orderId,

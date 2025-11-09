@@ -234,6 +234,10 @@ async function generateSongsForOrder(orderId) {
         }
 
         // Crear registro de canción
+        console.log(`🎵 [generateSongsForOrder] Preparando songData para item ${item.id}:`);
+        console.log(`   - item.language: "${item.language}"`);
+        console.log(`   - language a usar: "${item.language || 'es'}"`);
+
         const song = await storage.createSong(item.id, {
           title: item.dedicatedTo || 'Canción Personalizada',
           lyrics: item.lyrics,
@@ -243,7 +247,7 @@ async function generateSongsForOrder(orderId) {
           language: item.language || 'es', // 🌐 Idioma de las letras
         });
 
-        console.log(`✅ Canción creada con ID: ${song.id}, Suno ID: ${sunoResult.songIds[0]}`);
+        console.log(`✅ Canción creada con ID: ${song.id}, Suno ID: ${sunoResult.songIds[0]}, Language: ${song.language}`);
 
         // Solo usar polling si NO hay callbackUrl configurado Y NO se usa webhook
         if (!SUNO_CALLBACK_URL && !sunoResult.useWebhook) {
