@@ -19,6 +19,38 @@ export class ResendEmailService {
       this.resend = new Resend(RESEND_API_KEY);
       console.log('✅ Servicio de email Resend configurado correctamente');
     }
+
+    // Cache para prevenir emails duplicados
+    this.emailCache = new Map();
+    this.CACHE_DURATION = 60000; // 60 segundos
+  }
+
+  /**
+   * Verifica si ya se envió un email para esta orden recientemente
+   */
+  wasRecentlySent(orderId) {
+    const cacheKey = `order_${orderId}`;
+    const lastSent = this.emailCache.get(cacheKey);
+
+    if (lastSent && Date.now() - lastSent < this.CACHE_DURATION) {
+      console.log(`⚠️ Email para orden ${orderId} ya fue enviado hace menos de ${this.CACHE_DURATION/1000}s`);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Marca que se envió un email para esta orden
+   */
+  markAsSent(orderId) {
+    const cacheKey = `order_${orderId}`;
+    this.emailCache.set(cacheKey, Date.now());
+
+    // Limpiar cache viejo después de 2 minutos
+    setTimeout(() => {
+      this.emailCache.delete(cacheKey);
+    }, this.CACHE_DURATION * 2);
   }
 
   /**
@@ -46,20 +78,62 @@ export class ResendEmailService {
         return { success: false, message: 'No email provided' };
       }
 
+      // Verificar si ya se envió un email recientemente para esta orden
+      if (this.wasRecentlySent(orderId)) {
+        console.log(`⏭️ Omitiendo envío de email duplicado para orden ${orderId}`);
+        return { success: true, skipped: true, message: 'Email already sent recently' };
+      }
+
       console.log(`📧 Enviando email de canciones listas a: ${userEmail}`);
 
-      const songsList = songs.map(song => `
-        <li style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-          <strong style="font-size: 16px; color: #333;">${song.title || 'Canción sin título'}</strong><br>
-          <small style="color: #666;">Género: ${song.genre || 'N/A'}</small><br>
-          ${song.audioUrl && song.id ? `
-            <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 15px;">🎵 Escuchar</a>
-            <a href="${BACKEND_URL}/song/${song.id}/download" style="color: #e69216; text-decoration: none;">📥 Descargar</a>
+      // Agrupar canciones por orderItemId para mostrar variaciones juntas
+      const songsByOrderItem = songs.reduce((acc, song) => {
+        const key = song.orderItemId || 'unknown';
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(song);
+        return acc;
+      }, {});
+
+      // Generar HTML para cada grupo de canciones
+      const songsList = Object.values(songsByOrderItem).map(songGroup => {
+        // Ordenar por variación (V1, V2, V3...)
+        songGroup.sort((a, b) => (a.variation || 1) - (b.variation || 1));
+
+        const baseSong = songGroup[0];
+        const baseTitle = baseSong.title?.replace(/\s*\(V\d+\)/, '') || 'Canción sin título';
+
+        return `
+        <li style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #eee;">
+          <strong style="font-size: 17px; color: #333; display: block; margin-bottom: 8px;">${baseTitle}</strong>
+          <small style="color: #666; display: block; margin-bottom: 10px;">Género: ${baseSong.genre || 'N/A'}</small>
+          ${songGroup.length > 1 ? `
+            <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 8px;">
+              <small style="color: #888; display: block; margin-bottom: 8px;">🎵 ${songGroup.length} variaciones disponibles:</small>
+              ${songGroup.map(song => `
+                <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px;">
+                  <strong style="color: #555; font-size: 14px;">${song.title}</strong><br>
+                  ${song.audioUrl && song.id ? `
+                    <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 12px; font-size: 13px;">🎵 Escuchar</a>
+                    <a href="${BACKEND_URL}/song/${song.id}/download" style="color: #e69216; text-decoration: none; font-size: 13px;">📥 Descargar</a>
+                  ` : `
+                    <span style="color: #999; font-size: 13px;">Audio en proceso...</span>
+                  `}
+                </div>
+              `).join('')}
+            </div>
           ` : `
-            <span style="color: #999;">Audio en proceso...</span>
+            ${baseSong.audioUrl && baseSong.id ? `
+              <a href="${baseSong.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 15px;">🎵 Escuchar</a>
+              <a href="${BACKEND_URL}/song/${baseSong.id}/download" style="color: #e69216; text-decoration: none;">📥 Descargar</a>
+            ` : `
+              <span style="color: #999;">Audio en proceso...</span>
+            `}
           `}
         </li>
-      `).join('');
+      `;
+      }).join('');
 
       const htmlContent = `
         <!DOCTYPE html>
@@ -251,6 +325,9 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
       }
 
       console.log('✅ Email enviado exitosamente:', data.id);
+
+      // Marcar como enviado para prevenir duplicados
+      this.markAsSent(orderId);
 
       return {
         success: true,

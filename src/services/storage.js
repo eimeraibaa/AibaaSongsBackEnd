@@ -427,6 +427,20 @@ export class DatabaseStorage {
     }
   }
 
+  async updateSongTitle(songId, title) {
+    try {
+      await Song.update(
+        { title },
+        { where: { id: songId } }
+      );
+
+      return await Song.findByPk(songId);
+    } catch (error) {
+      console.error("Error actualizando título de canción:", error);
+      throw error;
+    }
+  }
+
   async getOrderItemById(orderItemId) {
     try {
       return await OrderItem.findByPk(orderItemId);
