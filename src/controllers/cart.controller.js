@@ -260,6 +260,7 @@ export const checkoutCart = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAmount * 100),
       currency: 'usd',
+      automatic_payment_methods: { enabled: true },
       metadata: {
         type: 'cart_checkout',
         cartItemIds,
