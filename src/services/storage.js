@@ -484,6 +484,7 @@ export class DatabaseStorage {
           genres: itemJson.genres,
           price: itemJson.price,
           status: itemJson.status,
+          singerGender: itemJson.singerGender || null,
           lyrics: itemJson.lyrics || null, // Las letras YA están en el order item
         };
       });
