@@ -161,7 +161,13 @@ export class DatabaseStorage {
     finalUrl = null,
     createdAt = new Date(),
   }) {
-    return OrderItem.create({
+    console.log(`📝 [createOrderItem] Parámetros recibidos:`);
+    console.log(`   - language recibido: "${language}"`);
+    console.log(`   - language type: ${typeof language}`);
+    console.log(`   - language is null?: ${language === null}`);
+    console.log(`   - language is undefined?: ${language === undefined}`);
+
+    const orderItem = await OrderItem.create({
       orderId,
       songRequestId,
       dedicatedTo,
@@ -177,6 +183,9 @@ export class DatabaseStorage {
       finalUrl,
       createdAt,
     });
+
+    console.log(`✅ [createOrderItem] OrderItem creado: ID ${orderItem.id}, Language guardado: "${orderItem.language}"`);
+    return orderItem;
   }
 
   async getUserOrders(userId) {

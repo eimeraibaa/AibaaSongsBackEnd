@@ -102,7 +102,11 @@ async function handlePaymentSuccess(paymentIntent) {
     for (const itemId of itemIds) {
       const item = await storage.getCartItemById(itemId);
       if (item) {
-        console.log(`📊 CartItem ${itemId}: language=${item.language || 'N/A'}`);
+        console.log(`📊 CartItem ${itemId} RAW:`);
+        console.log(`   - language value: "${item.language}"`);
+        console.log(`   - language type: ${typeof item.language}`);
+        console.log(`   - is null?: ${item.language === null}`);
+        console.log(`   - is undefined?: ${item.language === undefined}`);
         cartItems.push(item);
       }
     }
@@ -140,17 +144,21 @@ async function handlePaymentSuccess(paymentIntent) {
     // 4. Crear OrderItems con las letras del cart
     console.log('📝 Creando order items...');
     const orderItemPromises = cartItems.map(cartItem => {
-      console.log(`📝 Creando OrderItem para cartItem ${cartItem.id}: language=${cartItem.language || 'es'}`);
+      const languageToUse = cartItem.language; // NO usar fallback aquí, pasar el valor real
+      console.log(`📝 Creando OrderItem para cartItem ${cartItem.id}:`);
+      console.log(`   - CartItem language: "${cartItem.language}"`);
+      console.log(`   - Language a pasar: "${languageToUse}"`);
+
       return storage.createOrderItem({
         orderId: order.id,
         dedicatedTo: cartItem.dedicatedTo,
         prompt: cartItem.prompt,
         genres: cartItem.genres,
         lyrics: cartItem.lyrics, // 🔑 CRÍTICO: Copiar las letras del cart
-        language: cartItem.language || 'es', // 🌐 Copiar el idioma detectado
+        language: languageToUse, // 🌐 Copiar el idioma detectado SIN fallback
         singerGender: cartItem.singerGender || 'male', // 🎤 Copiar el género del cantante
         price: cartItem.price,
-        singerGender: cartItem.singerGender || null,
+        emotion: cartItem.emotion,
         status: 'processing',
       });
     });
@@ -158,7 +166,7 @@ async function handlePaymentSuccess(paymentIntent) {
     const orderItems = await Promise.all(orderItemPromises);
     console.log('✅ Order items creados:', orderItems.length);
     orderItems.forEach((item, i) => {
-      console.log(`   ${i + 1}. OrderItem ID: ${item.id}, Language: ${item.language || 'N/A'}`);
+      console.log(`   ${i + 1}. OrderItem ID: ${item.id}, Language: "${item.language}"`);
     });
 
     // 5. Limpiar el cart del usuario
