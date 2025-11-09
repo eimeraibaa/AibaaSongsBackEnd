@@ -126,6 +126,9 @@ export class ResendEmailService {
       const downloadLabel = detectedLanguage === 'en' ? 'Download' : 'Descargar';
       const processingLabel = detectedLanguage === 'en' ? 'Audio in process...' : 'Audio en proceso...';
 
+      // Labels para variaciones adicionales (solo V2)
+      const giftSongLabel = detectedLanguage === 'en' ? 'We gift you this additional song' : 'Te regalamos esta canción adicional';
+
       // Generar HTML para cada grupo de canciones
       const songsList = Object.values(songsByOrderItem).map(songGroup => {
         // Ordenar por variación (V1, V2, V3...)
@@ -141,8 +144,11 @@ export class ResendEmailService {
           ${songGroup.length > 1 ? `
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 8px;">
               <small style="color: #888; display: block; margin-bottom: 8px;">🎵 ${songGroup.length} ${variationsLabel}:</small>
-              ${songGroup.map(song => `
+              ${songGroup.map((song) => `
                 <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px;">
+                  ${song.variation === 2 ? `<div style="background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%); color: white; padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; font-size: 12px; font-weight: 500;">
+                    🎁 ${giftSongLabel}: ${song.title}
+                  </div>` : ''}
                   <strong style="color: #555; font-size: 14px;">${song.title}</strong><br>
                   ${song.audioUrl && song.id ? `
                     <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 12px; font-size: 13px;">🎵 ${listenLabel}</a>
@@ -177,6 +183,8 @@ export class ResendEmailService {
         downloadLink: 'Download',
         audioProcessing: 'Audio in process...',
         viewAllButton: 'View all my songs',
+        shareButton: '📢 Share my songs',
+        shareUrl: FRONTEND_URL,
         tipsTitle: 'Tips:',
         tip1: 'Click "Listen" to play the song in your browser',
         tip2: 'Click "Download" to save the MP3 file directly to your device',
@@ -195,6 +203,8 @@ export class ResendEmailService {
         downloadLink: 'Descargar',
         audioProcessing: 'Audio en proceso...',
         viewAllButton: 'Ver todas mis canciones',
+        shareButton: '📢 Compartir mis canciones',
+        shareUrl: FRONTEND_URL,
         tipsTitle: 'Consejos:',
         tip1: 'Haz clic en "Escuchar" para reproducir la canción en tu navegador',
         tip2: 'Haz clic en "Descargar" para guardar el archivo MP3 directamente en tu equipo',
@@ -283,6 +293,20 @@ export class ResendEmailService {
             .button:hover {
               background: #d67d0a;
             }
+            .share-button {
+              display: inline-block;
+              padding: 14px 28px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white !important;
+              text-decoration: none;
+              border-radius: 6px;
+              margin: 10px 5px;
+              font-weight: 500;
+              transition: transform 0.2s;
+            }
+            .share-button:hover {
+              transform: translateY(-2px);
+            }
             .tips {
               background: #f0f9ff;
               border-left: 4px solid #e69216;
@@ -336,6 +360,7 @@ export class ResendEmailService {
 
               <div class="button-container">
                 <a href="${FRONTEND_URL}/history" class="button">${texts.viewAllButton}</a>
+                <a href="${texts.shareUrl}" class="share-button">${texts.shareButton}</a>
               </div>
 
               <div class="tips">
