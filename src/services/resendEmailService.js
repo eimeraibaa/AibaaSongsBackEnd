@@ -85,10 +85,6 @@ export class ResendEmailService {
       }
 
       console.log(`📧 Enviando email de canciones listas a: ${userEmail}`);
-      console.log(`📊 Total canciones recibidas para email: ${songs.length}`);
-      songs.forEach((song, i) => {
-        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, Language: ${song.language || 'N/A'}, OrderItemId: ${song.orderItemId}, Variation: ${song.variation || 1}`);
-      });
 
       // Detectar el idioma predominante de las canciones
       const languageCounts = songs.reduce((acc, song) => {
@@ -97,7 +93,6 @@ export class ResendEmailService {
         return acc;
       }, {});
 
-      console.log(`📊 Conteo de idiomas:`, languageCounts);
       const detectedLanguage = languageCounts.en > (languageCounts.es || 0) ? 'en' : 'es';
       console.log(`🌐 Idioma detectado para el email: ${detectedLanguage === 'en' ? 'Inglés' : 'Español'}`);
 
@@ -111,14 +106,6 @@ export class ResendEmailService {
         return acc;
       }, {});
 
-      console.log(`📦 Grupos de canciones por OrderItem:`);
-      Object.entries(songsByOrderItem).forEach(([orderItemId, songsGroup]) => {
-        console.log(`   OrderItem ${orderItemId}: ${songsGroup.length} canción(es)`);
-        songsGroup.forEach((s, i) => {
-          console.log(`      ${i + 1}. ${s.title} (Variation ${s.variation || 1})`);
-        });
-      });
-
       // Detectar el idioma de las letras para los labels del email
       const genreLabel = detectedLanguage === 'en' ? 'Genre' : 'Género';
       const noTitleLabel = detectedLanguage === 'en' ? 'Untitled Song' : 'Canción sin título';
@@ -126,9 +113,6 @@ export class ResendEmailService {
       const listenLabel = detectedLanguage === 'en' ? 'Listen' : 'Escuchar';
       const downloadLabel = detectedLanguage === 'en' ? 'Download' : 'Descargar';
       const processingLabel = detectedLanguage === 'en' ? 'Audio in process...' : 'Audio en proceso...';
-
-      // Labels para variaciones adicionales (solo V2)
-      const giftSongLabel = detectedLanguage === 'en' ? 'We gift you this additional song' : 'Te regalamos esta canción adicional';
 
       // Generar HTML para cada grupo de canciones
       const songsList = Object.values(songsByOrderItem).map(songGroup => {
@@ -145,11 +129,8 @@ export class ResendEmailService {
           ${songGroup.length > 1 ? `
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 8px;">
               <small style="color: #888; display: block; margin-bottom: 8px;">🎵 ${songGroup.length} ${variationsLabel}:</small>
-              ${songGroup.map((song) => `
+              ${songGroup.map(song => `
                 <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px;">
-                  ${song.variation === 2 ? `<div style="background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%); color: white; padding: 6px 10px; border-radius: 4px; margin-bottom: 8px; font-size: 12px; font-weight: 500;">
-                    🎁 ${giftSongLabel}: ${song.title}
-                  </div>` : ''}
                   <strong style="color: #555; font-size: 14px;">${song.title}</strong><br>
                   ${song.audioUrl && song.id ? `
                     <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 12px; font-size: 13px;">🎵 ${listenLabel}</a>
@@ -184,8 +165,6 @@ export class ResendEmailService {
         downloadLink: 'Download',
         audioProcessing: 'Audio in process...',
         viewAllButton: 'View all my songs',
-        shareButton: '📢 Share my songs',
-        shareUrl: FRONTEND_URL,
         tipsTitle: 'Tips:',
         tip1: 'Click "Listen" to play the song in your browser',
         tip2: 'Click "Download" to save the MP3 file directly to your device',
@@ -204,15 +183,13 @@ export class ResendEmailService {
         downloadLink: 'Descargar',
         audioProcessing: 'Audio en proceso...',
         viewAllButton: 'Ver todas mis canciones',
-        shareButton: '📢 Compartir mis canciones',
-        shareUrl: FRONTEND_URL,
         tipsTitle: 'Consejos:',
         tip1: 'Haz clic en "Escuchar" para reproducir la canción en tu navegador',
         tip2: 'Haz clic en "Descargar" para guardar el archivo MP3 directamente en tu equipo',
         tip3: 'Las canciones estarán disponibles en tu cuenta para siempre',
         tip4: 'Comparte tus canciones con quien quieras 💜',
         footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
-        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA`
       };
 
       const htmlContent = `
@@ -294,20 +271,6 @@ export class ResendEmailService {
             .button:hover {
               background: #d67d0a;
             }
-            .share-button {
-              display: inline-block;
-              padding: 14px 28px;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white !important;
-              text-decoration: none;
-              border-radius: 6px;
-              margin: 10px 5px;
-              font-weight: 500;
-              transition: transform 0.2s;
-            }
-            .share-button:hover {
-              transform: translateY(-2px);
-            }
             .tips {
               background: #f0f9ff;
               border-left: 4px solid #e69216;
@@ -361,7 +324,6 @@ export class ResendEmailService {
 
               <div class="button-container">
                 <a href="${FRONTEND_URL}/history" class="button">${texts.viewAllButton}</a>
-                <a href="${texts.shareUrl}" class="share-button">${texts.shareButton}</a>
               </div>
 
               <div class="tips">
@@ -596,7 +558,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/history
             </div>
             <div class="footer">
               <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-              <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada</p>
+              <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA</p>
             </div>
           </div>
         </body>
