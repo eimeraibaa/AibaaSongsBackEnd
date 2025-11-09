@@ -20,7 +20,8 @@ export const addToCart = async (req, res) => {
       singerGender,
       favoriteMemory,      // NUEVO
       whatYouLikeMost,     // NUEVO
-      userEmail            // NUEVO
+      userEmail,
+      occasion            // NUEVO
     } = req.body;
 
     // Validaciones
@@ -47,6 +48,7 @@ export const addToCart = async (req, res) => {
       favoriteMemory: favoriteMemory || null,      // NUEVO
       whatYouLikeMost: whatYouLikeMost || null,    // NUEVO
       userEmail: userEmail || null,                // NUEVO
+      occasion: occasion || null,                  // NUEVO
       status: 'draft',
       price: 29.99
     });
