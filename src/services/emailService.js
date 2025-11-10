@@ -5,8 +5,12 @@
 
 import nodemailer from 'nodemailer';
 
+// Variables de entorno para SMTP
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
+const EMAIL_HOST = process.env.EMAIL_HOST || 'smtp.gmail.com';
+const EMAIL_PORT = process.env.EMAIL_PORT || 587;
+const EMAIL_SECURE = process.env.EMAIL_SECURE === 'true' || EMAIL_PORT == 465;
 const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
@@ -18,15 +22,20 @@ export class EmailService {
       console.warn('⚠️ No se configuraron credenciales de email. Usando modo de prueba.');
       this.readyPromise = this.setupTestAccount();
     } else {
-      // Configurar transporter de nodemailer con Gmail
+      // Configurar transporter de nodemailer con SMTP genérico
+      // Soporta SpaceMail, Gmail, Outlook, y cualquier servidor SMTP
       this.transporter = nodemailer.createTransport({
-        service: 'gmail', // Puedes cambiar a 'outlook', 'yahoo', etc.
+        host: EMAIL_HOST,
+        port: parseInt(EMAIL_PORT),
+        secure: EMAIL_SECURE, // true para puerto 465, false para otros puertos
         auth: {
           user: EMAIL_USER,
           pass: EMAIL_PASSWORD,
         },
       });
       this.readyPromise = Promise.resolve();
+
+      console.log(`📧 Configuración SMTP: ${EMAIL_HOST}:${EMAIL_PORT} (secure: ${EMAIL_SECURE})`);
     }
   }
 
