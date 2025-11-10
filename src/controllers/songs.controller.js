@@ -12,7 +12,8 @@ const songRequestSchema = z.object({
   dedicatedTo:      z.string().optional(),
   prompt:           z.string().min(1),
   genres:           z.array(z.string()).min(1),
-  paymentIntentId:  z.string().min(1)
+  paymentIntentId:  z.string().min(1),
+  singerGender:      z.enum(['male', 'female']).optional(),
 });
 
 const multipleSongRequestSchema = z.object({
@@ -37,7 +38,6 @@ export const songRequest = async (req, res) => {
         SongRequest.create({
           ...song,
           status: 'pending',
-          singerGender: song.singerGender,
           timestamp: new Date()
         })
       )
