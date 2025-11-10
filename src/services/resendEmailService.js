@@ -618,8 +618,9 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
    * @param {string} userEmail - Email del usuario
    * @param {string} userName - Nombre del usuario
    * @param {string} tempPassword - Contraseña temporal
+   * @param {string} language - Idioma del email ('es' o 'en')
    */
-  async sendTempPasswordEmail(userEmail, userName, tempPassword) {
+  async sendTempPasswordEmail(userEmail, userName, tempPassword, language = 'es') {
     try {
       if (!this.isConfigured()) {
         console.warn('⚠️ Servicio de email no configurado. No se enviará el email.');
@@ -636,7 +637,52 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
         return { success: false, message: 'No temporary password provided' };
       }
 
-      console.log(`📧 Enviando contraseña temporal a: ${userEmail}`);
+      console.log(`📧 Enviando contraseña temporal a: ${userEmail} (idioma: ${language})`);
+
+      // Textos según el idioma
+      const texts = language === 'en' ? {
+        title: '🎵 Welcome to Make Ur Songs!',
+        subtitle: 'Your temporary account has been created',
+        greeting: 'Hello',
+        intro: 'We have created a temporary account for you at Make Ur Songs. Here are your access credentials:',
+        emailLabel: 'Access email:',
+        passwordLabel: 'Temporary password:',
+        importantTitle: '⚠️ IMPORTANT - Please read this:',
+        warning1: 'This is a <strong>temporary password</strong>',
+        warning2: 'We recommend you <strong>change it as soon as possible</strong> for security',
+        warning3: 'You can change it from your profile once you log in',
+        warning4: 'Do not share this password with anyone',
+        loginButton: '🔓 Log in now',
+        profileButton: '👤 Go to my profile',
+        stepsTitle: '📋 Next steps:',
+        step1: 'Log in with the credentials we provided above',
+        step2: 'Complete your profile and <strong>change your password</strong>',
+        step3: 'Start creating your personalized songs! 🎵',
+        disclaimer: 'If you did not request this account, you can ignore this message.',
+        footerText: 'This is an automated email, please do not reply to this message.',
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music`
+      } : {
+        title: '🎵 ¡Bienvenido a Make Ur Songs!',
+        subtitle: 'Tu cuenta temporal ha sido creada',
+        greeting: '¡Hola',
+        intro: 'Hemos creado una cuenta temporal para ti en Make Ur Songs. Aquí están tus credenciales de acceso:',
+        emailLabel: 'Email de acceso:',
+        passwordLabel: 'Contraseña temporal:',
+        importantTitle: '⚠️ IMPORTANTE - Por favor lee esto:',
+        warning1: 'Esta es una <strong>contraseña temporal</strong>',
+        warning2: 'Te recomendamos <strong>cambiarla lo antes posible</strong> por seguridad',
+        warning3: 'Puedes cambiarla desde tu perfil una vez que inicies sesión',
+        warning4: 'No compartas esta contraseña con nadie',
+        loginButton: '🔓 Iniciar sesión ahora',
+        profileButton: '👤 Ir a mi perfil',
+        stepsTitle: '📋 Próximos pasos:',
+        step1: 'Inicia sesión con las credenciales que te proporcionamos arriba',
+        step2: 'Completa tu perfil y <strong>cambia tu contraseña</strong>',
+        step3: '¡Comienza a crear tus canciones personalizadas! 🎵',
+        disclaimer: 'Si no solicitaste esta cuenta, puedes ignorar este mensaje.',
+        footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
+      };
 
       const htmlContent = `
         <!DOCTYPE html>
@@ -776,87 +822,115 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
         <body>
           <div class="container">
             <div class="header">
-              <h1>🎵 ¡Bienvenido a Make Ur Songs!</h1>
-              <p>Tu cuenta temporal ha sido creada</p>
+              <h1>${texts.title}</h1>
+              <p>${texts.subtitle}</p>
             </div>
             <div class="content">
-              <p style="font-size: 16px;">¡Hola${userName ? ' ' + userName : ''}! 👋</p>
-              <p style="font-size: 15px;">Hemos creado una cuenta temporal para ti en Make Ur Songs. Aquí están tus credenciales de acceso:</p>
+              <p style="font-size: 16px;">${texts.greeting}${userName ? ' ' + userName : ''}! 👋</p>
+              <p style="font-size: 15px;">${texts.intro}</p>
 
               <div class="credentials-box">
-                <p><strong>📧 Email de acceso:</strong></p>
+                <p><strong>📧 ${texts.emailLabel}</strong></p>
                 <p style="font-size: 16px; color: #555;">${userEmail}</p>
-                <p style="margin-top: 20px;"><strong>🔑 Contraseña temporal:</strong></p>
+                <p style="margin-top: 20px;"><strong>🔑 ${texts.passwordLabel}</strong></p>
                 <div class="password">${tempPassword}</div>
               </div>
 
               <div class="warning">
-                <strong>⚠️ IMPORTANTE - Por favor lee esto:</strong>
+                <strong>${texts.importantTitle}</strong>
                 <ul>
-                  <li>Esta es una <strong>contraseña temporal</strong></li>
-                  <li>Te recomendamos <strong>cambiarla lo antes posible</strong> por seguridad</li>
-                  <li>Puedes cambiarla desde tu perfil una vez que inicies sesión</li>
-                  <li>No compartas esta contraseña con nadie</li>
+                  <li>${texts.warning1}</li>
+                  <li>${texts.warning2}</li>
+                  <li>${texts.warning3}</li>
+                  <li>${texts.warning4}</li>
                 </ul>
               </div>
 
               <div class="button-container">
-                <a href="${FRONTEND_URL}/login" class="button">🔓 Iniciar sesión ahora</a>
-                <a href="${FRONTEND_URL}/profile" class="button">👤 Ir a mi perfil</a>
+                <a href="${FRONTEND_URL}/login" class="button">${texts.loginButton}</a>
+                <a href="${FRONTEND_URL}/profile" class="button">${texts.profileButton}</a>
               </div>
 
               <div class="steps">
-                <strong>📋 Próximos pasos:</strong>
+                <strong>${texts.stepsTitle}</strong>
                 <ol>
-                  <li>Inicia sesión con las credenciales que te proporcionamos arriba</li>
-                  <li>Completa tu perfil y <strong>cambia tu contraseña</strong></li>
-                  <li>¡Comienza a crear tus canciones personalizadas con IA! 🎵</li>
+                  <li>${texts.step1}</li>
+                  <li>${texts.step2}</li>
+                  <li>${texts.step3}</li>
                 </ol>
               </div>
 
               <p style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
-                Si no solicitaste esta cuenta, puedes ignorar este mensaje.
+                ${texts.disclaimer}
               </p>
             </div>
             <div class="footer">
-              <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-              <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA</p>
+              <p>${texts.footerText}</p>
+              <p>${texts.footerCopyright}</p>
             </div>
           </div>
         </body>
         </html>
       `;
 
-      const textContent = `
-¡Hola${userName ? ' ' + userName : ''}!
+      const textContent = language === 'en' ? `
+${texts.greeting}${userName ? ' ' + userName : ''}!
 
-¡Bienvenido a Make Ur Songs! 🎵
+${texts.title}
 
-Hemos creado una cuenta temporal para ti. Aquí están tus credenciales de acceso:
+${texts.intro}
 
-📧 Email: ${userEmail}
-🔑 Contraseña temporal: ${tempPassword}
+📧 ${texts.emailLabel} ${userEmail}
+🔑 ${texts.passwordLabel} ${tempPassword}
 
-⚠️ IMPORTANTE:
-• Esta es una contraseña temporal
-• Te recomendamos cambiarla lo antes posible por seguridad
-• Puedes cambiarla desde tu perfil una vez que inicies sesión
-• No compartas esta contraseña con nadie
+${texts.importantTitle}
+• ${texts.warning1}
+• ${texts.warning2}
+• ${texts.warning3}
+• ${texts.warning4}
 
-Próximos pasos:
-1. Inicia sesión en ${FRONTEND_URL}/login
-2. Completa tu perfil y cambia tu contraseña en ${FRONTEND_URL}/profile
-3. ¡Comienza a crear tus canciones personalizadas! 🎵
+${texts.stepsTitle}
+1. ${texts.step1}
+2. ${texts.step2}
+3. ${texts.step3}
 
-Si no solicitaste esta cuenta, puedes ignorar este mensaje.
+${texts.disclaimer}
 
-© ${new Date().getFullYear()} Make Ur Songs
+${texts.footerCopyright}
+      `.trim() : `
+${texts.greeting}${userName ? ' ' + userName : ''}!
+
+${texts.title}
+
+${texts.intro}
+
+📧 ${texts.emailLabel} ${userEmail}
+🔑 ${texts.passwordLabel} ${tempPassword}
+
+${texts.importantTitle}
+• ${texts.warning1}
+• ${texts.warning2}
+• ${texts.warning3}
+• ${texts.warning4}
+
+${texts.stepsTitle}
+1. ${texts.step1}
+2. ${texts.step2}
+3. ${texts.step3}
+
+${texts.disclaimer}
+
+${texts.footerCopyright}
       `.trim();
+
+      const subject = language === 'en'
+        ? '🔐 Your temporary account at Make Ur Songs'
+        : '🔐 Tu cuenta temporal en Make Ur Songs';
 
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
-        subject: '🔐 Tu cuenta temporal en Make Ur Songs',
+        subject,
         html: htmlContent,
         text: textContent,
       });
