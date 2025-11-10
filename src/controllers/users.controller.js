@@ -69,13 +69,11 @@ export const registerUser = async (req, res) => {
       }
     } else {
       // Crear nuevo usuario
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       const newUser = await storage.createUser({
         email,
         firstName: firstName || 'Usuario',
         lastName: lastName || 'Temporal',
-        password: hashedPassword
+        password: password
       });
 
       // Login automático después del registro
