@@ -112,12 +112,7 @@ export const updateProfile = async (req, res) => {
 
     // Validar que el email no esté siendo usado por otro usuario
     if (email) {
-      const existingUser = await User.findOne({
-        where: {
-          email,
-          id: { [Op.ne]: userId } // Op.ne = not equal
-        }
-      });
+    const existingUser = await storage.getUserByEmail(email);
 
       if (existingUser) {
         return res.status(400).json({
