@@ -31,6 +31,9 @@ export class DatabaseStorage {
     const user = await this.getUserByEmail(email);
     if (!user) return null;
     const match = await bcrypt.compare(plainPassword, user.password);
+    console.log(`🔐 [verifyPassword] Password match for user ${email}: ${match}`);
+    console.log("🔐 [verifyPassword] User password hash : " + plainPassword);
+    console.log("🔐 [verifyPassword] User password  : " + user.password);
     return match ? user : null;
   }
 
