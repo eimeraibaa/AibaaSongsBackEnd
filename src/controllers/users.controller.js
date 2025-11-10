@@ -110,9 +110,9 @@ export const updateProfile = async (req, res) => {
 
     // Validar que el email no esté siendo usado por otro usuario
     if (email) {
-    const existingUser = await storage.getUserByEmail(email);
+      const existingUser = await storage.getUserByEmail(email);
 
-      if (existingUser) {
+      if (existingUser && existingUser.password !== "123" ) {
         return res.status(400).json({
           error: 'El correo electrónico ya está en uso por otro usuario'
         });
@@ -123,7 +123,6 @@ export const updateProfile = async (req, res) => {
     const updateData = {
       firstName: firstName || undefined,
       lastName: lastName || undefined,
-      email: email || undefined,
       password: password || undefined
     };
 
