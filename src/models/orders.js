@@ -105,7 +105,7 @@ export const OrderItem = sequelize.define('OrderItem', {
     allowNull: true, // Letras generadas con OpenAI para Suno
   },
   language: {
-    type: DataTypes.STRING(2),
+    type: DataTypes.STRING(5),
     allowNull: false,
   },
   previewUrl: {

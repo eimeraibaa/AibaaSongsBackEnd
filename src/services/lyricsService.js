@@ -45,13 +45,13 @@ export const generateLyrics = async (
     const combinedText = `${prompt || ''} ${dedicatedTo || ''} ${favoriteMemory || ''} ${whatYouLikeMost || ''} ${emotion || ''} ${occasion || ''}`;
     const detectedLanguage = language; //detectLanguage(combinedText);
 
-    console.log(`🌐 Idioma detectado: ${detectedLanguage === 'en' ? 'Inglés' : 'Español'}`);
+    console.log(`🌐 Idioma detectado: ${detectedLanguage.includes('en') ? 'Inglés' : 'Español'}`);
 
     // Construir el prompt según el idioma detectado
     let userPrompt;
     let systemPrompt;
 
-    if (detectedLanguage === 'en') {
+    if (detectedLanguage.includes('en')) {
       // Prompt en inglés
       systemPrompt = "You are a professional songwriter specialized in writing emotional and personalized song lyrics. You write in English and your lyrics are always appropriate and high-quality. You have a special gift for capturing memories, emotions, and unique qualities of people in your lyrics, making each song truly personal and meaningful.";
 

@@ -306,7 +306,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
       console.log(`📧 Enviando contraseña temporal a: ${userEmail} (idioma: ${language})`);
 
       // Textos según el idioma
-      const texts = language === 'en' ? {
+      const texts = language.includes('en') ? {
         title: '🎵 Welcome to Make Ur Songs!',
         subtitle: 'Your temporary account has been created',
         greeting: 'Hello',
@@ -346,7 +346,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
         footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
       };
 
-      const subject = language === 'en'
+      const subject = language.includes('en')
         ? '🔐 Your temporary account at Make Ur Songs'
         : '🔐 Tu cuenta temporal en Make Ur Songs';
 
@@ -413,7 +413,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
           </body>
           </html>
         `,
-        text: language === 'en' ? `
+        text: language.includes('en') ? `
 ${texts.greeting}${userName ? ' ' + userName : ''}!
 
 ${texts.title}

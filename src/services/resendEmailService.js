@@ -107,12 +107,12 @@ export class ResendEmailService {
       }, {});
 
       // Detectar el idioma de las letras para los labels del email
-      const genreLabel = detectedLanguage === 'en' ? 'Genre' : 'Género';
-      const noTitleLabel = detectedLanguage === 'en' ? 'Untitled Song' : 'Canción sin título';
-      const variationsLabel = detectedLanguage === 'en' ? 'variations available' : 'variaciones disponibles';
-      const listenLabel = detectedLanguage === 'en' ? 'Listen' : 'Escuchar';
-      const downloadLabel = detectedLanguage === 'en' ? 'Download' : 'Descargar';
-      const processingLabel = detectedLanguage === 'en' ? 'Audio in process...' : 'Audio en proceso...';
+      const genreLabel = detectedLanguage.includes('en') ? 'Genre' : 'Género';
+      const noTitleLabel = detectedLanguage.includes('en') ? 'Untitled Song' : 'Canción sin título';
+      const variationsLabel = detectedLanguage.includes('en') ? 'variations available' : 'variaciones disponibles';
+      const listenLabel = detectedLanguage.includes('en') ? 'Listen' : 'Escuchar';
+      const downloadLabel = detectedLanguage.includes('en') ? 'Download' : 'Descargar';
+      const processingLabel = detectedLanguage.includes('en') ? 'Audio in process...' : 'Audio en proceso...';
 
       // Generar HTML para cada grupo de canciones
       const songsList = Object.values(songsByOrderItem).map(songGroup => {
@@ -154,7 +154,7 @@ export class ResendEmailService {
       }).join('');
 
       // Textos según el idioma
-      const texts = detectedLanguage === 'en' ? {
+      const texts = detectedLanguage.includes('en') ? {
         title: '🎵 Your songs are ready!',
         orderLabel: 'Your order',
         greeting: 'Hello! 👋',
@@ -345,7 +345,7 @@ export class ResendEmailService {
         </html>
       `;
 
-      const textContent = detectedLanguage === 'en' ? `
+      const textContent = detectedLanguage.includes('en') ? `
 Hello!
 
 Your ${songs.length} personalized song${songs.length > 1 ? 's are' : ' is'} ready!
@@ -382,7 +382,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/history
       `.trim();
 
       // Configurar subject según el idioma
-      const subject = detectedLanguage === 'en'
+      const subject = detectedLanguage.includes('en')
         ? '🎉 Your personalized songs are ready!'
         : '🎉 ¡Tus canciones personalizadas están listas!';
 
@@ -640,7 +640,7 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
       console.log(`📧 Enviando contraseña temporal a: ${userEmail} (idioma: ${language})`);
 
       // Textos según el idioma
-      const texts = language === 'en' ? {
+      const texts = language.includes('en') ? {
         title: '🎵 Welcome to Make Ur Songs!',
         subtitle: 'Your temporary account has been created',
         greeting: 'Hello',
@@ -873,7 +873,7 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
         </html>
       `;
 
-      const textContent = language === 'en' ? `
+      const textContent = language.includes('en') ? `
 ${texts.greeting}${userName ? ' ' + userName : ''}!
 
 ${texts.title}
@@ -923,7 +923,7 @@ ${texts.disclaimer}
 ${texts.footerCopyright}
       `.trim();
 
-      const subject = language === 'en'
+      const subject = language.includes('en')
         ? '🔐 Your temporary account at Make Ur Songs'
         : '🔐 Tu cuenta temporal en Make Ur Songs';
 

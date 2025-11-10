@@ -47,7 +47,7 @@ export const CartItem = sequelize.define(
     allowNull: true, // processing, completed, delivered
     },
     language: {
-      type: DataTypes.STRING(2),
+      type: DataTypes.STRING(5),
       allowNull: false,
     },
     price: {
