@@ -2,6 +2,7 @@
 import jwt from 'jsonwebtoken';
 import { storage } from '../services/storage.js';
 import bcrypt from 'bcryptjs';
+import { resendEmailService as emailService } from '../services/resendEmailService.js';
 
 export const loginUser = async (req, res, next) => {
   try {
@@ -68,13 +69,41 @@ export const registerUser = async (req, res) => {
         });
       }
     } else {
+      // Determinar si es un usuario temporal
+      const finalLastName = lastName || 'Temporal';
+      const isTemporaryUser = finalLastName === 'Temporal';
+
+      // Guardar la contraseña sin hashear para enviarla por email (solo si es usuario temporal)
+      const plainPassword = password;
+
       // Crear nuevo usuario
       const newUser = await storage.createUser({
         email,
         firstName: firstName || 'Usuario',
-        lastName: lastName || 'Temporal',
+        lastName: finalLastName,
         password: password
       });
+
+      // Si es usuario temporal, enviar email con la contraseña
+      if (isTemporaryUser) {
+        try {
+          console.log(`📧 Enviando contraseña temporal a usuario: ${email}`);
+          const emailResult = await emailService.sendTempPasswordEmail(
+            email,
+            firstName || 'Usuario',
+            plainPassword
+          );
+
+          if (emailResult.success) {
+            console.log('✅ Email de contraseña temporal enviado correctamente');
+          } else {
+            console.warn('⚠️ No se pudo enviar el email de contraseña temporal:', emailResult.message || emailResult.error);
+          }
+        } catch (emailError) {
+          // No fallar el registro si el email falla, solo loguearlo
+          console.error('❌ Error al enviar email de contraseña temporal:', emailError);
+        }
+      }
 
       // Login automático después del registro
       req.login(newUser, (err) => {

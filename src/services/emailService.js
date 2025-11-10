@@ -282,6 +282,138 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
   }
 
   /**
+   * Envía email con la contraseña temporal al usuario
+   * @param {string} userEmail - Email del usuario
+   * @param {string} userName - Nombre del usuario
+   * @param {string} tempPassword - Contraseña temporal
+   */
+  async sendTempPasswordEmail(userEmail, userName, tempPassword) {
+    try {
+      // Esperar a que el transporter esté listo
+      await this.ensureReady();
+
+      if (!userEmail) {
+        console.warn('⚠️ No se proporcionó email de usuario');
+        return { success: false, message: 'No email provided' };
+      }
+
+      if (!tempPassword) {
+        console.warn('⚠️ No se proporcionó contraseña temporal');
+        return { success: false, message: 'No temporary password provided' };
+      }
+
+      const mailOptions = {
+        from: `"🎵 Make Ur Song" <${EMAIL_FROM}>`,
+        to: userEmail,
+        subject: '🔐 Tu cuenta temporal en Make Ur Songs',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #e69216ff 0%, #e69216ff 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+              .credentials-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e69216ff; }
+              .password { font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold; color: #e69216ff; padding: 10px; background: #f5f5f5; border-radius: 4px; display: inline-block; margin: 10px 0; }
+              .button { display: inline-block; padding: 12px 24px; background: #e69216ff; color: white; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+              .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+              .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎵 ¡Bienvenido a Make Ur Songs!</h1>
+                <p>Tu cuenta temporal ha sido creada</p>
+              </div>
+              <div class="content">
+                <p>¡Hola${userName ? ' ' + userName : ''}! 👋</p>
+                <p>Hemos creado una cuenta temporal para ti. Aquí están tus credenciales de acceso:</p>
+
+                <div class="credentials-box">
+                  <p><strong>📧 Email:</strong> ${userEmail}</p>
+                  <p><strong>🔑 Contraseña temporal:</strong></p>
+                  <div class="password">${tempPassword}</div>
+                </div>
+
+                <div class="warning">
+                  <strong>⚠️ IMPORTANTE:</strong><br>
+                  • Esta es una contraseña temporal<br>
+                  • Te recomendamos cambiarla lo antes posible por seguridad<br>
+                  • Puedes cambiarla desde tu perfil una vez que inicies sesión
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                  <a href="${FRONTEND_URL}/login" class="button">Iniciar sesión ahora</a>
+                  <a href="${FRONTEND_URL}/profile" class="button">Ir a mi perfil</a>
+                </div>
+
+                <p style="margin-top: 30px;">
+                  <strong>Próximos pasos:</strong><br>
+                  1. Inicia sesión con tus credenciales<br>
+                  2. Completa tu perfil y cambia tu contraseña<br>
+                  3. ¡Comienza a crear tus canciones personalizadas! 🎵
+                </p>
+              </div>
+              <div class="footer">
+                <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+                <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+        text: `
+¡Hola${userName ? ' ' + userName : ''}!
+
+¡Bienvenido a Make Ur Songs! 🎵
+
+Hemos creado una cuenta temporal para ti. Aquí están tus credenciales de acceso:
+
+📧 Email: ${userEmail}
+🔑 Contraseña temporal: ${tempPassword}
+
+⚠️ IMPORTANTE:
+• Esta es una contraseña temporal
+• Te recomendamos cambiarla lo antes posible por seguridad
+• Puedes cambiarla desde tu perfil una vez que inicies sesión
+
+Próximos pasos:
+1. Inicia sesión en ${FRONTEND_URL}/login
+2. Completa tu perfil y cambia tu contraseña en ${FRONTEND_URL}/profile
+3. ¡Comienza a crear tus canciones personalizadas! 🎵
+
+© ${new Date().getFullYear()} Make Ur Songs
+        `.trim(),
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+
+      console.log('✅ Email de contraseña temporal enviado:', info.messageId);
+
+      // Si estamos usando Ethereal, mostrar preview URL
+      if (info.messageId && !EMAIL_USER) {
+        console.log('📧 Preview URL:', nodemailer.getTestMessageUrl(info));
+      }
+
+      return {
+        success: true,
+        messageId: info.messageId,
+        previewUrl: nodemailer.getTestMessageUrl(info),
+      };
+
+    } catch (error) {
+      console.error('❌ Error enviando email de contraseña temporal:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Verifica la configuración del servicio de email
    */
   async verifyConnection() {
