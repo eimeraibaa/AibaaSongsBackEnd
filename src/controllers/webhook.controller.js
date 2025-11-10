@@ -224,7 +224,8 @@ async function generateSongsForOrder(orderId) {
           item.genres[0] || 'pop',
           item.dedicatedTo || 'Canción Personalizada',
           SUNO_CALLBACK_URL, // Pasar el callbackUrl
-          item.singerGender || 'male' // género del cantante
+          item.singerGender || 'male', // género del cantante
+          item.emotion
         );
 
         if (SUNO_CALLBACK_URL) {

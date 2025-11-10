@@ -21,7 +21,8 @@ export const addToCart = async (req, res) => {
       favoriteMemory,      // NUEVO
       whatYouLikeMost,     // NUEVO
       userEmail,
-      occasion            // NUEVO
+      occasion,            // NUEVO
+      language
     } = req.body;
 
     // Validaciones
@@ -49,6 +50,7 @@ export const addToCart = async (req, res) => {
       whatYouLikeMost: whatYouLikeMost || null,    // NUEVO
       userEmail: userEmail || null,                // NUEVO
       occasion: occasion || null,                  // NUEVO
+      language: language || 'en',
       status: 'draft',
       price: 29.99
     });
