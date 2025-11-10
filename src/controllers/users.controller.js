@@ -123,7 +123,8 @@ export const updateProfile = async (req, res) => {
     const updateData = {
       firstName: firstName || undefined,
       lastName: lastName || undefined,
-      email: email || undefined
+      email: email || undefined,
+      password: password || undefined
     };
 
     // Si se proporciona una nueva contraseña, hashearla
