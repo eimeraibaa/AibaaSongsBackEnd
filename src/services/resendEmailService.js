@@ -614,6 +614,278 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
   }
 
   /**
+   * Envía email con la contraseña temporal al usuario
+   * @param {string} userEmail - Email del usuario
+   * @param {string} userName - Nombre del usuario
+   * @param {string} tempPassword - Contraseña temporal
+   */
+  async sendTempPasswordEmail(userEmail, userName, tempPassword) {
+    try {
+      if (!this.isConfigured()) {
+        console.warn('⚠️ Servicio de email no configurado. No se enviará el email.');
+        return { success: false, message: 'Email service not configured' };
+      }
+
+      if (!userEmail) {
+        console.warn('⚠️ No se proporcionó email de usuario');
+        return { success: false, message: 'No email provided' };
+      }
+
+      if (!tempPassword) {
+        console.warn('⚠️ No se proporcionó contraseña temporal');
+        return { success: false, message: 'No temporary password provided' };
+      }
+
+      console.log(`📧 Enviando contraseña temporal a: ${userEmail}`);
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              margin: 0;
+              padding: 0;
+              background-color: #f5f5f5;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: #ffffff;
+            }
+            .header {
+              background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%);
+              color: white;
+              padding: 40px 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0 0 10px 0;
+              font-size: 28px;
+              font-weight: 600;
+            }
+            .header p {
+              margin: 0;
+              font-size: 16px;
+              opacity: 0.95;
+            }
+            .content {
+              padding: 40px 30px;
+            }
+            .credentials-box {
+              background: #fafafa;
+              padding: 25px;
+              border-radius: 8px;
+              margin: 25px 0;
+              border: 1px solid #eeeeee;
+              border-left: 4px solid #e69216;
+            }
+            .credentials-box p {
+              margin: 10px 0;
+              font-size: 15px;
+            }
+            .password {
+              font-family: 'Courier New', monospace;
+              font-size: 20px;
+              font-weight: bold;
+              color: #e69216;
+              padding: 12px 16px;
+              background: #f5f5f5;
+              border-radius: 6px;
+              display: inline-block;
+              margin: 10px 0;
+              border: 2px dashed #e69216;
+            }
+            .warning {
+              background: #fff3cd;
+              border-left: 4px solid #ffc107;
+              padding: 20px;
+              margin: 25px 0;
+              border-radius: 4px;
+            }
+            .warning strong {
+              color: #856404;
+              display: block;
+              margin-bottom: 10px;
+            }
+            .warning ul {
+              margin: 0;
+              padding-left: 20px;
+            }
+            .warning li {
+              margin-bottom: 5px;
+              color: #856404;
+            }
+            .button-container {
+              text-align: center;
+              margin-top: 30px;
+            }
+            .button {
+              display: inline-block;
+              padding: 14px 28px;
+              background: #e69216;
+              color: white !important;
+              text-decoration: none;
+              border-radius: 6px;
+              margin: 10px 5px;
+              font-weight: 500;
+              transition: background 0.3s;
+            }
+            .button:hover {
+              background: #d67d0a;
+            }
+            .steps {
+              background: #e3f2fd;
+              border-left: 4px solid #2196f3;
+              padding: 20px;
+              margin-top: 30px;
+              border-radius: 4px;
+            }
+            .steps strong {
+              color: #1976d2;
+              display: block;
+              margin-bottom: 10px;
+              font-size: 16px;
+            }
+            .steps ol {
+              margin: 0;
+              padding-left: 20px;
+            }
+            .steps li {
+              margin-bottom: 8px;
+              color: #555;
+            }
+            .footer {
+              text-align: center;
+              padding: 30px;
+              background-color: #fafafa;
+              color: #666;
+              font-size: 12px;
+              border-top: 1px solid #eeeeee;
+            }
+            .footer p {
+              margin: 5px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎵 ¡Bienvenido a Make Ur Songs!</h1>
+              <p>Tu cuenta temporal ha sido creada</p>
+            </div>
+            <div class="content">
+              <p style="font-size: 16px;">¡Hola${userName ? ' ' + userName : ''}! 👋</p>
+              <p style="font-size: 15px;">Hemos creado una cuenta temporal para ti en Make Ur Songs. Aquí están tus credenciales de acceso:</p>
+
+              <div class="credentials-box">
+                <p><strong>📧 Email de acceso:</strong></p>
+                <p style="font-size: 16px; color: #555;">${userEmail}</p>
+                <p style="margin-top: 20px;"><strong>🔑 Contraseña temporal:</strong></p>
+                <div class="password">${tempPassword}</div>
+              </div>
+
+              <div class="warning">
+                <strong>⚠️ IMPORTANTE - Por favor lee esto:</strong>
+                <ul>
+                  <li>Esta es una <strong>contraseña temporal</strong></li>
+                  <li>Te recomendamos <strong>cambiarla lo antes posible</strong> por seguridad</li>
+                  <li>Puedes cambiarla desde tu perfil una vez que inicies sesión</li>
+                  <li>No compartas esta contraseña con nadie</li>
+                </ul>
+              </div>
+
+              <div class="button-container">
+                <a href="${FRONTEND_URL}/login" class="button">🔓 Iniciar sesión ahora</a>
+                <a href="${FRONTEND_URL}/profile" class="button">👤 Ir a mi perfil</a>
+              </div>
+
+              <div class="steps">
+                <strong>📋 Próximos pasos:</strong>
+                <ol>
+                  <li>Inicia sesión con las credenciales que te proporcionamos arriba</li>
+                  <li>Completa tu perfil y <strong>cambia tu contraseña</strong></li>
+                  <li>¡Comienza a crear tus canciones personalizadas con IA! 🎵</li>
+                </ol>
+              </div>
+
+              <p style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+                Si no solicitaste esta cuenta, puedes ignorar este mensaje.
+              </p>
+            </div>
+            <div class="footer">
+              <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+              <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada con IA</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const textContent = `
+¡Hola${userName ? ' ' + userName : ''}!
+
+¡Bienvenido a Make Ur Songs! 🎵
+
+Hemos creado una cuenta temporal para ti. Aquí están tus credenciales de acceso:
+
+📧 Email: ${userEmail}
+🔑 Contraseña temporal: ${tempPassword}
+
+⚠️ IMPORTANTE:
+• Esta es una contraseña temporal
+• Te recomendamos cambiarla lo antes posible por seguridad
+• Puedes cambiarla desde tu perfil una vez que inicies sesión
+• No compartas esta contraseña con nadie
+
+Próximos pasos:
+1. Inicia sesión en ${FRONTEND_URL}/login
+2. Completa tu perfil y cambia tu contraseña en ${FRONTEND_URL}/profile
+3. ¡Comienza a crear tus canciones personalizadas! 🎵
+
+Si no solicitaste esta cuenta, puedes ignorar este mensaje.
+
+© ${new Date().getFullYear()} Make Ur Songs
+      `.trim();
+
+      const { data, error } = await this.resend.emails.send({
+        from: EMAIL_FROM,
+        to: userEmail,
+        subject: '🔐 Tu cuenta temporal en Make Ur Songs',
+        html: htmlContent,
+        text: textContent,
+      });
+
+      if (error) {
+        console.error('❌ Error enviando email de contraseña temporal con Resend:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      console.log('✅ Email de contraseña temporal enviado exitosamente:', data.id);
+
+      return {
+        success: true,
+        messageId: data.id,
+      };
+
+    } catch (error) {
+      console.error('❌ Error enviando email de contraseña temporal:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Verifica la configuración del servicio de email
    */
   async verifyConnection() {
