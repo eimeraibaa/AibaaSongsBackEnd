@@ -17,6 +17,11 @@ export class DatabaseStorage {
     return User.findOne({ where: { email } });
   }
 
+  async updateUser(id, updates) {
+    await User.update(updates, { where: { id } });
+    return User.findByPk(id);
+  }
+
   async createUser({ firstName, lastName, email, password }) {
     const hashed = await bcrypt.hash(password, 10);
     return User.create({ firstName, lastName, email, password: hashed });

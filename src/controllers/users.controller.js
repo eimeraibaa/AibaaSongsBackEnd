@@ -147,16 +147,10 @@ export const updateProfile = async (req, res) => {
       updateData.password = hashedPassword;
     }
 
-    // Actualizar usuario
-    await User.update(
-      updateData,
-      {
-        where: { id: userId }
-      }
-    );
+    await storage.updateUser(userId, updateData);
 
     // Obtener usuario actualizado
-    const updatedUser = await User.findByPk(userId);
+    const updatedUser = await storage.getUser(userId);
 
     return res.status(200).json(updatedUser.toSafeObject());
   } catch (error) {
