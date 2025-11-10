@@ -1,7 +1,7 @@
 import { SunoService } from '../services/sunoService.js';
 import { Song } from '../models/song.js';
 import { storage } from '../services/storage.js';
-import { emailService } from '../services/emailService.js';
+import { resendEmailService as emailService } from '../services/resendEmailService.js';
 import fetch from 'node-fetch';
 
 const sunoService = new SunoService();
