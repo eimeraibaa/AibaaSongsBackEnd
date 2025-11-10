@@ -171,7 +171,7 @@ export class ResendEmailService {
         tip3: 'Your songs will be available in your account forever',
         tip4: 'Share your songs with whoever you want 💜',
         footerText: 'This is an automated email, please do not reply to this message.',
-        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music with AI`
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music`
       } : {
         title: '🎵 ¡Tus canciones están listas!',
         orderLabel: 'Tu orden',
