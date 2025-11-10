@@ -65,6 +65,7 @@ export class DatabaseStorage {
     whatYouLikeMost,
     userEmail,
     occasion,
+    language,
     price = 29.99,
     status = "draft",
   }) {
@@ -81,6 +82,7 @@ export class DatabaseStorage {
       whatYouLikeMost,
       userEmail,
       occasion,
+      language,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
