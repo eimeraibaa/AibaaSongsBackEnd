@@ -282,7 +282,7 @@ export class DatabaseStorage {
         throw new Error("Cart item no encontrado");
       }
 
-      // 2. Generar letras con IA (ahora retorna { lyrics, language })
+      // 2. Generar letras (ahora retorna { lyrics, language })
       const result = await generateLyrics(
         cartItem.prompt,
         cartItem.genres,

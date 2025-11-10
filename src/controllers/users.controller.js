@@ -35,7 +35,7 @@ export const loginUser = async (req, res, next) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { email, firstName, lastName, password } = req.body;
+    const { email, firstName, lastName, password, language } = req.body;
 
     // Validar campos requeridos
     if (!email || !password) {
@@ -87,11 +87,23 @@ export const registerUser = async (req, res) => {
       // Si es usuario temporal, enviar email con la contraseña
       if (isTemporaryUser) {
         try {
-          console.log(`📧 Enviando contraseña temporal a usuario: ${email}`);
+          // Detectar idioma del usuario (desde body o header Accept-Language)
+          let userLanguage = language || 'es'; // Por defecto español
+
+          // Si no se pasó el idioma en el body, intentar detectarlo desde el header
+          if (!language && req.headers['accept-language']) {
+            const acceptLanguage = req.headers['accept-language'].toLowerCase();
+            if (acceptLanguage.includes('en')) {
+              userLanguage = 'en';
+            }
+          }
+
+          console.log(`📧 Enviando contraseña temporal a usuario: ${email} (idioma: ${userLanguage})`);
           const emailResult = await emailService.sendTempPasswordEmail(
             email,
             firstName || 'Usuario',
-            plainPassword
+            plainPassword,
+            userLanguage
           );
 
           if (emailResult.success) {
