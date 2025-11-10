@@ -78,6 +78,12 @@ ${singerGender ? `
 🎤 Preferred voice: ${singerGender}
 ` : ''}
 
+🌐 Language / Idioma:
+- Since the main description, emotion, or occasion are written mostly in **English**, generate **the entire song in English** with correct grammar and native fluency.
+- **DO NOT** mix both languages in the same song unless explicitly requested (e.g., "I want a bilingual song").
+- Review spelling and final coherence before showing the result.
+- Ensure **native-like fluency** and correct spelling throughout.
+
 Please generate lyrics that:
 - *Explicitly mention the occasion* at least *twice*: once in *[VERSE 1]*, and once in *[CHORUS]* or *[BRIDGE]* (use the actual occasion words).
 - Auto-adapt to the *genre* (structure, rhythm, tone, and duration).
@@ -154,6 +160,14 @@ ${prompt}
 ${singerGender ? `
 🎤 Voz preferida: ${singerGender}
 ` : ''}
+
+🌐 Idioma / Language:
+- Si la descripción principal, emoción u ocasión están escritas mayormente en **español**, genera **toda la canción en español** con gramática correcta y naturalidad nativa.
+- Si están mayormente en **inglés**, genera **toda la canción en inglés fluido y gramaticalmente correcto**, evitando errores ortográficos o traducciones literales.
+- Si el texto mezcla ambos idiomas, detecta el idioma predominante y usa solo ese para la letra completa.
+- **NO** combines ambos idiomas en una misma canción, a menos que el usuario lo indique explícitamente (por ejemplo: "quiero una canción bilingüe").
+- Revisa ortografía y coherencia final antes de mostrar el resultado.
+- Si se elige inglés, asegura **fluidez nativa** y ortografía correcta. Si se elige español, asegura **gramática adecuada y tildes correctas**.
 
 Por favor genera letras que:
 - *Mencionen explícitamente la ocasión* indicada *al menos dos veces*: una en *[VERSO 1]* y otra en *[CORO]* o *[PUENTE]* (usa palabras del tipo: "cumpleaños", "aniversario", "graduación", etc.).
