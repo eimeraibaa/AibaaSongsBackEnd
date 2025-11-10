@@ -37,6 +37,7 @@ export const songRequest = async (req, res) => {
         SongRequest.create({
           ...song,
           status: 'pending',
+          singerGender: song.singerGender,
           timestamp: new Date()
         })
       )
