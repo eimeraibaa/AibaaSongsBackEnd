@@ -107,8 +107,8 @@ export const getAuthenticatedUser = (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // Asumiendo que isAuthenticated agrega req.user
-    const { firstName, lastName, email } = req.body;
+    const userId = req.user.id; // Del middleware isAuthenticated
+    const { firstName, lastName, email, password } = req.body;
 
     // Validar que el email no esté siendo usado por otro usuario
     if (email) {
@@ -126,13 +126,30 @@ export const updateProfile = async (req, res) => {
       }
     }
 
+    // Preparar datos de actualización
+    const updateData = {
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
+      email: email || undefined
+    };
+
+    // Si se proporciona una nueva contraseña, hashearla
+    if (password && password.trim().length > 0) {
+      // Validar longitud mínima de contraseña
+      if (password.length < 8) {
+        return res.status(400).json({
+          error: 'La contraseña debe tener al menos 8 caracteres'
+        });
+      }
+
+      // Hashear la contraseña
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.password = hashedPassword;
+    }
+
     // Actualizar usuario
     await User.update(
-      {
-        firstName: firstName || undefined,
-        lastName: lastName || undefined,
-        email: email || undefined
-      },
+      updateData,
       {
         where: { id: userId }
       }
