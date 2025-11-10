@@ -291,7 +291,8 @@ export class DatabaseStorage {
         cartItem.whatYouLikeMost,
         cartItem.emotion,
         cartItem.occasion,
-        cartItem.singerGender
+        cartItem.singerGender,
+        cartItem.language
       );
 
       // 3. Actualizar el cart item con las letras generadas y el idioma detectado

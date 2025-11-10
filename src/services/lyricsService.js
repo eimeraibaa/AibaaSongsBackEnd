@@ -38,11 +38,12 @@ export const generateLyrics = async (
   emotion = null,
   occasion = null,
   singerGender = null,
+  language
 ) => {
   try {
     // Detectar el idioma del prompt
     const combinedText = `${prompt || ''} ${dedicatedTo || ''} ${favoriteMemory || ''} ${whatYouLikeMost || ''} ${emotion || ''} ${occasion || ''}`;
-    const detectedLanguage = detectLanguage(combinedText);
+    const detectedLanguage = language; //detectLanguage(combinedText);
 
     console.log(`🌐 Idioma detectado: ${detectedLanguage === 'en' ? 'Inglés' : 'Español'}`);
 
