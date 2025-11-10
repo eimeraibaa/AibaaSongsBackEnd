@@ -24,7 +24,7 @@ export class EmailService {
     } else {
       // Configurar transporter de nodemailer con SMTP genérico
       // Soporta SpaceMail, Gmail, Outlook, y cualquier servidor SMTP
-      this.transporter = nodemailer.createTransport({
+      const transportConfig = {
         host: EMAIL_HOST,
         port: parseInt(EMAIL_PORT),
         secure: EMAIL_SECURE, // true para puerto 465, false para otros puertos
@@ -32,10 +32,29 @@ export class EmailService {
           user: EMAIL_USER,
           pass: EMAIL_PASSWORD,
         },
-      });
+        // Opciones adicionales para mejorar compatibilidad
+        connectionTimeout: 10000, // 10 segundos timeout
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+        // Opciones TLS para manejar certificados auto-firmados o problemas SSL
+        tls: {
+          rejectUnauthorized: false, // Para desarrollo/servidores con certificados no verificados
+          minVersion: 'TLSv1.2'
+        },
+        // Habilitar debug para ver más información
+        debug: process.env.EMAIL_DEBUG === 'true',
+        logger: process.env.EMAIL_DEBUG === 'true'
+      };
+
+      this.transporter = nodemailer.createTransport(transportConfig);
       this.readyPromise = Promise.resolve();
 
-      console.log(`📧 Configuración SMTP: ${EMAIL_HOST}:${EMAIL_PORT} (secure: ${EMAIL_SECURE})`);
+      console.log(`📧 Configuración SMTP:`);
+      console.log(`   - Host: ${EMAIL_HOST}`);
+      console.log(`   - Port: ${EMAIL_PORT}`);
+      console.log(`   - Secure: ${EMAIL_SECURE}`);
+      console.log(`   - User: ${EMAIL_USER}`);
+      console.log(`   - From: ${EMAIL_FROM}`);
     }
   }
 
@@ -298,11 +317,31 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
       // Esperar a que el transporter esté listo
       await this.ensureReady();
 
+      console.log('🔍 Verificando conexión SMTP...');
       await this.transporter.verify();
-      console.log('✅ Servidor de email listo');
+      console.log('✅ Servidor de email listo y conectado');
       return true;
     } catch (error) {
-      console.error('❌ Error verificando conexión de email:', error);
+      console.error('========================================');
+      console.error('❌ ERROR VERIFICANDO CONEXIÓN DE EMAIL');
+      console.error('========================================');
+      console.error('Código de error:', error.code);
+      console.error('Mensaje:', error.message);
+      console.error('Comando:', error.command);
+      console.error('');
+      console.error('Configuración actual:');
+      console.error(`  - Host: ${EMAIL_HOST}`);
+      console.error(`  - Port: ${EMAIL_PORT}`);
+      console.error(`  - Secure: ${EMAIL_SECURE}`);
+      console.error(`  - User: ${EMAIL_USER}`);
+      console.error('');
+      console.error('Posibles soluciones:');
+      console.error('  1. Verifica que el host sea correcto (mail.spacemail.com)');
+      console.error('  2. Prueba con puerto 587 en lugar de 465');
+      console.error('  3. Verifica tus credenciales de SpaceMail');
+      console.error('  4. Asegúrate de que tu servidor puede conectarse a SpaceMail');
+      console.error('  5. Habilita EMAIL_DEBUG=true en .env para más detalles');
+      console.error('========================================');
       return false;
     }
   }
