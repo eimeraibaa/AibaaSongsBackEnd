@@ -83,10 +83,7 @@ export const OrderItem = sequelize.define('OrderItem', {
   },
   singerGender: {
     type: DataTypes.STRING(10),
-    allowNull: true,
-    validate: {
-      isIn: [['male', 'female']]
-    }
+    allowNull: true
   },
   emotion: {
     type: DataTypes.TEXT,
@@ -109,9 +106,7 @@ export const OrderItem = sequelize.define('OrderItem', {
   },
   language: {
     type: DataTypes.STRING(2),
-    allowNull: true,
-    defaultValue: 'es',
-    comment: 'Idioma de las letras: es (español) o en (inglés)'
+    allowNull: false,
   },
   previewUrl: {
     type: DataTypes.TEXT,

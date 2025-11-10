@@ -32,10 +32,6 @@ export const SongRequest = sequelize.define(
     singerGender: {
       type: DataTypes.STRING(10),
       allowNull: false,
-      defaultValue: 'male',
-      validate: {
-        isIn: [['male', 'female']]
-      }
     },
     status: {
       type: DataTypes.TEXT,

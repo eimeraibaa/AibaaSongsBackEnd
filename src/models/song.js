@@ -51,8 +51,6 @@ export const Song = sequelize.define('Song', {
   },
   language: {
     type: DataTypes.STRING(2),
-    allowNull: true,
-    defaultValue: 'es',
-    comment: 'Idioma de las letras: es (español) o en (inglés)'
+    allowNull: false,
   }
 });

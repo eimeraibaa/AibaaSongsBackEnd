@@ -31,10 +31,7 @@ export const CartItem = sequelize.define(
     },
     singerGender: {
       type: DataTypes.STRING(10),
-      allowNull: false,
-      validate: {
-        isIn: [['male', 'female']]
-      }
+      allowNull: true,
     },
     previewUrl: {
       type: DataTypes.TEXT,
@@ -51,9 +48,7 @@ export const CartItem = sequelize.define(
     },
     language: {
       type: DataTypes.STRING(2),
-      allowNull: true,
-      defaultValue: 'es',
-      comment: 'Idioma detectado de las letras: es (español) o en (inglés)'
+      allowNull: false,
     },
     price: {
       type: DataTypes.DECIMAL(10, 2),
