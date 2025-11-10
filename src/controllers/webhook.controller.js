@@ -245,7 +245,7 @@ async function generateSongsForOrder(orderId) {
           audioUrl: null, // Se actualizará cuando esté listo
           sunoSongId: sunoResult.songIds[0], // Puede ser taskId si usa webhook
           genre: item.genres[0] || 'pop',
-          language: item.language || 'es', // 🌐 Idioma de las letras
+          language: item.language, // 🌐 Idioma de las letras
         });
 
         console.log(`✅ Canción creada con ID: ${song.id}, Suno ID: ${sunoResult.songIds[0]}, Language: ${song.language}`);

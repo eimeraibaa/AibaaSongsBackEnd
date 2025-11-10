@@ -316,7 +316,7 @@ export class DatabaseStorage {
   async createSong(orderItemId, songData) {
     try {
       console.log(`🎵 [createSong] Creando canción para orderItemId: ${orderItemId}`);
-      console.log(`📊 [createSong] Language recibido: ${songData.language || 'N/A'}`);
+      console.log(`📊 [createSong] Language recibido: ${songData.language}`);
 
       const song = await Song.create({
         orderItemId,
@@ -326,7 +326,7 @@ export class DatabaseStorage {
         imageUrl: songData.imageUrl,
         sunoSongId: songData.sunoSongId,
         genre: songData.genre,
-        language: songData.language || 'es', // 🌐 Guardar idioma
+        language: songData.language, // 🌐 Guardar idioma
         variation: songData.variation || 1,
         status: "generating", // Inicialmente en estado de generación
         createdAt: new Date(),
@@ -540,7 +540,7 @@ export class DatabaseStorage {
           status: itemJson.status,
           singerGender: itemJson.singerGender || null,
           lyrics: itemJson.lyrics || null, // Las letras YA están en el order item
-          language: itemJson.language || 'es', // 🌐 Idioma de las letras
+          language: itemJson.language, // 🌐 Idioma de las letras
         };
       });
 

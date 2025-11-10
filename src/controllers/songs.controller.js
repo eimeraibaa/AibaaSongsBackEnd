@@ -14,6 +14,7 @@ const songRequestSchema = z.object({
   genres:           z.array(z.string()).min(1),
   paymentIntentId:  z.string().min(1),
   singerGender:      z.enum(['male', 'female']).optional(),
+  language:       z.string().optional(),
 });
 
 const multipleSongRequestSchema = z.object({
