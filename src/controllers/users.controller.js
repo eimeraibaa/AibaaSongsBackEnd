@@ -112,7 +112,7 @@ export const updateProfile = async (req, res) => {
     if (email) {
       const existingUser = await storage.getUserByEmail(email);
 
-      if (existingUser && existingUser.password !== "123" ) {
+      if (existingUser && existingUser.password === "123" ) {
         return res.status(400).json({
           error: 'El correo electrónico ya está en uso por otro usuario'
         });
