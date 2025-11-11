@@ -4,7 +4,9 @@ import Stripe from 'stripe';
 import { SongRequest } from '../models/songs.js';
 import { Payment }     from '../models/payment.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16',
+});
 
 // 1) Esquema de validación
 const songRequestSchema = z.object({

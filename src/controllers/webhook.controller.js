@@ -9,7 +9,7 @@ import { SunoService } from '../services/sunoService.js';
 import { resendEmailService as emailService } from '../services/resendEmailService.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2020-08-27',
+  apiVersion: '2023-10-16',
 });
 
 const sunoService = new SunoService();
