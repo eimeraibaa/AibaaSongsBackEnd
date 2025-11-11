@@ -9,7 +9,7 @@ async function main() {
   try {
     // IMPORTANTE: force: false para NO borrar datos en producción
     // Solo usar force: true en desarrollo inicial para recrear schemas
-    await sequelize.sync({ force: true, alter: false });
+    await sequelize.sync({ force: false, alter: false });
     console.log("✅ Base de datos sincronizada");
 
     app.listen(port, () => {

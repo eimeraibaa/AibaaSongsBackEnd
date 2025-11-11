@@ -170,6 +170,8 @@ export class ResendEmailService {
         tip2: 'Click "Download" to save the MP3 file directly to your device',
         tip3: 'Your songs will be available in your account forever',
         tip4: 'Share your songs with whoever you want 💜',
+        contactSupport: 'If you need assistance, feel free to contact our support team.',
+        conctactEmail: 'support@makeursong.com',
         footerText: 'This is an automated email, please do not reply to this message.',
         footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music`
       } : {
@@ -184,10 +186,13 @@ export class ResendEmailService {
         audioProcessing: 'Audio en proceso...',
         viewAllButton: 'Ver todas mis canciones',
         tipsTitle: 'Consejos:',
+        contactSupport: 'Si necesitas ayuda, no dudes en contactar a nuestro equipo de soporte.',
+        conctactEmail: 'support@makeursong.com',
         tip1: 'Haz clic en "Escuchar" para reproducir la canción en tu navegador',
         tip2: 'Haz clic en "Descargar" para guardar el archivo MP3 directamente en tu equipo',
         tip3: 'Las canciones estarán disponibles en tu cuenta para siempre',
         tip4: 'Comparte tus canciones con quien quieras 💜',
+
         footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
         footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
       };
@@ -335,6 +340,10 @@ export class ResendEmailService {
                   <li>${texts.tip4}</li>
                 </ul>
               </div>
+              <div class="footer">
+                <p>${texts.contactSupport}</p>
+                <p><a href="mailto:${texts.conctactEmail}" style="color: #e69216; text-decoration: none;">${texts.conctactEmail}</a></p>
+              </div>
             </div>
             <div class="footer">
               <p>${texts.footerText}</p>
@@ -361,7 +370,7 @@ View all my songs: ${FRONTEND_URL}/history
 
 Enjoy your music!
 
-© ${new Date().getFullYear()} Make Ur Songs
+© ${new Date().getFullYear()} Make Ur Song
       `.trim() : `
 ¡Hola!
 
@@ -378,7 +387,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/history
 
 ¡Disfruta tu música!
 
-© ${new Date().getFullYear()} Make Ur Songs
+© ${new Date().getFullYear()} Make Ur Song
       `.trim();
 
       // Configurar subject según el idioma
@@ -659,6 +668,8 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
         step2: 'Complete your profile and <strong>change your password</strong>',
         step3: 'Start creating your personalized songs! 🎵',
         disclaimer: 'If you did not request this account, you can ignore this message.',
+        contactSupport: 'If you need assistance, feel free to contact our support team.',
+        conctactEmail: 'support@makeursong.com',
         footerText: 'This is an automated email, please do not reply to this message.',
         footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music`
       } : {
@@ -680,6 +691,8 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
         step2: 'Completa tu perfil y <strong>cambia tu contraseña</strong>',
         step3: '¡Comienza a crear tus canciones personalizadas! 🎵',
         disclaimer: 'Si no solicitaste esta cuenta, puedes ignorar este mensaje.',
+        contactSupport: 'Si necesitas ayuda, no dudes en contactar a nuestro equipo de soporte.',
+        conctactEmail: 'support@makeursong.com',
         footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
         footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
       };
@@ -863,6 +876,12 @@ Ver detalles de mi orden: ${FRONTEND_URL}/orders/${orderId}
               <p style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
                 ${texts.disclaimer}
               </p>
+              <p style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+                ${texts.contactSupport}
+              </p>
+              <p style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+                ${texts.conctactEmail}
+              </p>
             </div>
             <div class="footer">
               <p>${texts.footerText}</p>
@@ -919,6 +938,8 @@ ${texts.stepsTitle}
 3. ${texts.step3}
 
 ${texts.disclaimer}
+${texts.contactSupport}
+${texts.conctactEmail}
 
 ${texts.footerCopyright}
       `.trim();

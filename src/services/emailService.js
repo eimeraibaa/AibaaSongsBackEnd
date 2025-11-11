@@ -307,7 +307,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
 
       // Textos según el idioma
       const texts = language.includes('en') ? {
-        title: '🎵 Welcome to Make Ur Songs!',
+        title: '🎵 Welcome to Make Ur Song!',
         subtitle: 'Your temporary account has been created',
         greeting: 'Hello',
         intro: 'We have created a temporary account for you. Here are your access credentials:',
@@ -324,9 +324,9 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
         step2: 'Complete your profile and change your password',
         step3: 'Start creating your personalized songs! 🎵',
         footerText: 'This is an automated email, please do not reply to this message.',
-        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music`
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Song - Creating personalized music`
       } : {
-        title: '🎵 ¡Bienvenido a Make Ur Songs!',
+        title: '🎵 ¡Bienvenido a Make Ur Song!',
         subtitle: 'Tu cuenta temporal ha sido creada',
         greeting: '¡Hola',
         intro: 'Hemos creado una cuenta temporal para ti. Aquí están tus credenciales de acceso:',
@@ -343,12 +343,12 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
         step2: 'Completa tu perfil y cambia tu contraseña',
         step3: '¡Comienza a crear tus canciones personalizadas! 🎵',
         footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
-        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Song - Creando música personalizada`
       };
 
       const subject = language.includes('en')
-        ? '🔐 Your temporary account at Make Ur Songs'
-        : '🔐 Tu cuenta temporal en Make Ur Songs';
+        ? '🔐 Your temporary account at Make Ur Song'
+        : '🔐 Tu cuenta temporal en Make Ur Song';
 
       const mailOptions = {
         from: `"🎵 Make Ur Song" <${EMAIL_FROM}>`,
@@ -377,7 +377,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
                 <p>${texts.subtitle}</p>
               </div>
               <div class="content">
-                <p>${texts.greeting}${userName ? ' ' + userName : ''}! 👋</p>
+                <p>${texts.greeting} SongMaker}! 👋</p>
                 <p>${texts.intro}</p>
 
                 <div class="credentials-box">
