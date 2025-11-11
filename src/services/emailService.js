@@ -147,7 +147,7 @@ export class EmailService {
               </div>
               <div class="footer">
                 <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
-                <p>© ${new Date().getFullYear()} Make Ur Songs - Creando música</p>
+                <p>© ${new Date().getFullYear()} Make Ur Song - Creando música</p>
               </div>
             </div>
           </body>
@@ -170,7 +170,7 @@ Ver todas mis canciones: ${FRONTEND_URL}/songs
 
 ¡Disfruta tu música!
 
-© ${new Date().getFullYear()} Make Ur Songs
+© ${new Date().getFullYear()} Make Ur Song
         `.trim(),
       };
 
@@ -435,7 +435,7 @@ ${texts.stepsTitle}
 
 ${texts.footerCopyright}
         `.trim() : `
-${texts.greeting}${userName ? ' ' + userName : ''}!
+${texts.greeting} SongMaker!
 
 ${texts.title}
 
