@@ -1,3 +1,4 @@
+// EmailService v2.0 - Optimizado para iOS con Resend
 import { Resend } from 'resend';
 import crypto from 'crypto';
 
