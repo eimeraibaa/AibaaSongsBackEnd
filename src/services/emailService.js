@@ -685,6 +685,358 @@ class EmailService {
   isConfigured() {
     return !!RESEND_API_KEY;
   }
+
+  // ============================================
+  // MÉTODOS DE COMPATIBILIDAD CON VERSIÓN ANTERIOR
+  // Estos métodos mantienen la compatibilidad con el código existente
+  // ============================================
+
+  /**
+   * Método de compatibilidad: sendSongsReadyEmail
+   * Wrapper para el nuevo método sendEmail()
+   *
+   * @param {string} userEmail - Email del usuario
+   * @param {Array} songs - Array de canciones completadas
+   * @param {number} orderId - ID de la orden
+   */
+  async sendSongsReadyEmail(userEmail, songs, orderId) {
+    console.log('⚠️ Usando método de compatibilidad sendSongsReadyEmail()');
+    console.log('💡 Considera actualizar a sendEmail(orderId, userEmail, userId, songs)');
+
+    // Llamar al nuevo método sendEmail con userId = 'legacy'
+    // En una actualización futura, el userId debería obtenerse del contexto
+    return await this.sendEmail(orderId, userEmail, 'legacy', songs);
+  }
+
+  /**
+   * Método de compatibilidad: sendGenerationFailedEmail
+   * Envía email cuando falla la generación de canciones
+   *
+   * @param {string} userEmail - Email del usuario
+   * @param {number} orderId - ID de la orden
+   * @param {Array} failedSongs - Canciones que fallaron
+   */
+  async sendGenerationFailedEmail(userEmail, orderId, failedSongs) {
+    console.log('⚠️ Usando método de compatibilidad sendGenerationFailedEmail()');
+
+    try {
+      if (!this.resend) {
+        console.error('❌ Resend no configurado');
+        return { success: false, error: 'Email service not configured' };
+      }
+
+      const failedList = failedSongs.map(song => `
+        • ${song.title || 'Canción sin título'}: ${song.error || 'Error desconocido'}
+      `).join('\n');
+
+      const subject = '⚠️ Problema con la generación de tus canciones';
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
+    <tr>
+      <td align="center" style="padding: 30px 0;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #f44336; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                ⚠️ Problema con tu orden
+              </h1>
+              <p style="margin: 15px 0 0 0; color: #ffffff; font-size: 16px;">
+                Orden #${orderId}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #333; line-height: 1.6;">
+                ¡Hola! 👋
+              </p>
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #333; line-height: 1.6;">
+                Lamentamos informarte que hubo un problema al generar algunas de tus canciones:
+              </p>
+
+              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #856404; white-space: pre-line;">
+                  ${failedList}
+                </p>
+              </div>
+
+              <p style="margin: 20px 0 0 0; font-size: 16px; color: #333; line-height: 1.6;">
+                No te preocupes, nuestro equipo está revisando el problema y te contactaremos pronto para resolverlo.
+              </p>
+
+              <div style="text-align: center; margin-top: 30px;">
+                <a href="${FRONTEND_URL}/orders/${orderId}"
+                   target="_blank"
+                   style="display: inline-block;
+                          text-decoration: none;
+                          color: #ffffff;
+                          background-color: #e69216;
+                          border-radius: 6px;
+                          padding: 14px 32px;
+                          font-size: 15px;
+                          font-weight: 600;">
+                  Ver detalles de mi orden
+                </a>
+              </div>
+
+              <p style="margin: 30px 0 0 0; font-size: 14px; color: #666; text-align: center;">
+                Si necesitas ayuda, contáctanos en:
+                <a href="mailto:${EMAIL_FROM}" style="color: #e69216; text-decoration: none; font-weight: 600;">
+                  ${EMAIL_FROM}
+                </a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f5f5f5; padding: 25px 30px; text-align: center; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0; font-size: 12px; color: #999;">
+                © 2025 Make Ur Song - Creando música personalizada
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `;
+
+      const { data, error } = await this.resend.emails.send({
+        from: EMAIL_FROM,
+        to: userEmail,
+        subject: subject,
+        html: htmlContent,
+      });
+
+      if (error) {
+        console.error('❌ Error enviando email de fallo:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`✅ Email de fallo enviado: ${data.id}`);
+      return { success: true, messageId: data.id };
+
+    } catch (error) {
+      console.error('❌ Error en sendGenerationFailedEmail:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Método de compatibilidad: sendTempPasswordEmail
+   * Envía email con contraseña temporal al usuario
+   *
+   * @param {string} userEmail - Email del usuario
+   * @param {string} userName - Nombre del usuario
+   * @param {string} tempPassword - Contraseña temporal
+   * @param {string} language - Idioma del email ('es' o 'en')
+   */
+  async sendTempPasswordEmail(userEmail, userName, tempPassword, language = 'es') {
+    console.log('⚠️ Usando método de compatibilidad sendTempPasswordEmail()');
+
+    try {
+      if (!this.resend) {
+        console.error('❌ Resend no configurado');
+        return { success: false, error: 'Email service not configured' };
+      }
+
+      if (!tempPassword) {
+        console.warn('⚠️ No se proporcionó contraseña temporal');
+        return { success: false, message: 'No temporary password provided' };
+      }
+
+      console.log(`📧 Enviando contraseña temporal a: ${userEmail} (idioma: ${language})`);
+
+      // Textos según el idioma
+      const texts = language.includes('en') ? {
+        title: '🎵 Welcome to Make Ur Song!',
+        subtitle: 'Your temporary account has been created',
+        greeting: 'Hello',
+        intro: 'We have created a temporary account for you. Here are your access credentials:',
+        emailLabel: 'Email:',
+        passwordLabel: 'Temporary password:',
+        importantTitle: '⚠️ IMPORTANT:',
+        warning1: 'This is a temporary password',
+        warning2: 'We recommend you change it as soon as possible for security',
+        warning3: 'You can change it from your profile once you log in',
+        loginButton: 'Log in now',
+        stepsTitle: 'Next steps:',
+        step1: 'Log in with your credentials',
+        step2: 'Complete your profile and change your password',
+        step3: 'Start creating your personalized songs! 🎵',
+        footerText: 'This is an automated email, please do not reply to this message.',
+        footerCopyright: '© 2025 Make Ur Song - Creating personalized music'
+      } : {
+        title: '🎵 ¡Bienvenido a Make Ur Song!',
+        subtitle: 'Tu cuenta temporal ha sido creada',
+        greeting: '¡Hola',
+        intro: 'Hemos creado una cuenta temporal para ti. Aquí están tus credenciales de acceso:',
+        emailLabel: 'Email:',
+        passwordLabel: 'Contraseña temporal:',
+        importantTitle: '⚠️ IMPORTANTE:',
+        warning1: 'Esta es una contraseña temporal',
+        warning2: 'Te recomendamos cambiarla lo antes posible por seguridad',
+        warning3: 'Puedes cambiarla desde tu perfil una vez que inicies sesión',
+        loginButton: 'Iniciar sesión ahora',
+        stepsTitle: 'Próximos pasos:',
+        step1: 'Inicia sesión con tus credenciales',
+        step2: 'Completa tu perfil y cambia tu contraseña',
+        step3: '¡Comienza a crear tus canciones personalizadas! 🎵',
+        footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
+        footerCopyright: '© 2025 Make Ur Song - Creando música personalizada'
+      };
+
+      const subject = language.includes('en')
+        ? '🔐 Your temporary account at Make Ur Song'
+        : '🔐 Tu cuenta temporal en Make Ur Song';
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="${language}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${texts.title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
+    <tr>
+      <td align="center" style="padding: 30px 0;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+              <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                ${texts.title}
+              </h1>
+              <p style="margin: 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                ${texts.subtitle}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #333;">
+                ${texts.greeting} ${userName || 'Songmaker'}! 👋
+              </p>
+              <p style="margin: 0 0 30px 0; font-size: 16px; color: #333; line-height: 1.6;">
+                ${texts.intro}
+              </p>
+
+              <div style="background-color: #fff3e0; border-left: 4px solid #e69216; padding: 25px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">
+                  <strong>📧 ${texts.emailLabel}</strong>
+                </p>
+                <p style="margin: 0 0 20px 0; font-size: 16px; color: #333; font-weight: 600;">
+                  ${userEmail}
+                </p>
+                <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">
+                  <strong>🔑 ${texts.passwordLabel}</strong>
+                </p>
+                <div style="background-color: #ffffff; padding: 15px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold; color: #e69216; letter-spacing: 1px; text-align: center;">
+                  ${tempPassword}
+                </div>
+              </div>
+
+              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 4px;">
+                <p style="margin: 0 0 10px 0; font-size: 15px; color: #856404; font-weight: 700;">
+                  ${texts.importantTitle}
+                </p>
+                <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px; line-height: 1.8;">
+                  <li>${texts.warning1}</li>
+                  <li>${texts.warning2}</li>
+                  <li>${texts.warning3}</li>
+                </ul>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${FRONTEND_URL}/login"
+                   target="_blank"
+                   style="display: inline-block;
+                          text-decoration: none;
+                          color: #ffffff;
+                          background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%);
+                          border-radius: 8px;
+                          padding: 16px 40px;
+                          font-size: 16px;
+                          font-weight: 700;
+                          box-shadow: 0 4px 12px rgba(230, 146, 22, 0.3);">
+                  ${texts.loginButton}
+                </a>
+              </div>
+
+              <div style="margin: 30px 0 0 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+                <p style="margin: 0 0 15px 0; font-size: 15px; color: #333; font-weight: 600;">
+                  ${texts.stepsTitle}
+                </p>
+                <ol style="margin: 0; padding-left: 20px; color: #666; font-size: 14px; line-height: 1.8;">
+                  <li>${texts.step1}</li>
+                  <li>${texts.step2}</li>
+                  <li>${texts.step3}</li>
+                </ol>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f5f5f5; padding: 25px 30px; text-align: center; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: #999;">
+                ${texts.footerText}
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #999;">
+                ${texts.footerCopyright}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `;
+
+      const { data, error } = await this.resend.emails.send({
+        from: EMAIL_FROM,
+        to: userEmail,
+        subject: subject,
+        html: htmlContent,
+      });
+
+      if (error) {
+        console.error('❌ Error enviando email de contraseña temporal:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`✅ Email de contraseña temporal enviado: ${data.id}`);
+      return { success: true, messageId: data.id };
+
+    } catch (error) {
+      console.error('❌ Error en sendTempPasswordEmail:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // Exportar instancia singleton
