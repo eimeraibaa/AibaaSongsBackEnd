@@ -3,10 +3,8 @@ import Stripe from 'stripe';
 import { insertCartItemSchema } from '../shared/schema.js';
 import { storage } from '../services/storage.js'; // ajusta la ruta si tu storage está en otro sitio
 
-// Inicializa Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2020-08-27',
-});
+// Inicializa Stripe (sin especificar apiVersion usa la versión predeterminada de tu cuenta)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // POST /api/cart/add
 export const addToCart = async (req, res) => {
@@ -202,6 +200,13 @@ export const checkoutCart = async (req, res) => {
   try {
     console.log('🔵 [BACKEND] POST /cart/checkout llamado para userId:', req.user.id);
 
+    // 🚫 Headers anti-caché para prevenir que el navegador use respuestas viejas
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     const cartItems = await storage.getUserCartItems(req.user.id);
     if (cartItems.length === 0) {
       console.log('❌ [BACKEND] Carrito vacío');
@@ -213,7 +218,7 @@ export const checkoutCart = async (req, res) => {
 
     console.log('🔵 [BACKEND] Items en carrito:', cartItems.length);
 
-    // Asumimos que cada item tiene un campo `price` en string o number
+    // Asumimos que cada item tiene un campo `price` en string or number
     const totalAmount = cartItems.reduce((sum, item) => {
       const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
       return sum + price;
@@ -225,41 +230,58 @@ export const checkoutCart = async (req, res) => {
 
     console.log('🔵 [BACKEND] Idempotency key:', idempotencyKey);
 
-    // Buscar si ya existe un PaymentIntent para este carrito
-    try {
-      const existingIntents = await stripe.paymentIntents.list({
-        limit: 10,
-      });
+    // ⚙️ Parámetro para forzar creación de nuevo PaymentIntent (útil al cambiar de cuenta Stripe)
+    const forceNew = req.query.forceNew === 'true' || req.body.forceNew === true;
 
-      // Filtrar por metadata que coincida con este carrito
-      const matchingIntent = existingIntents.data.find(pi =>
-        pi.metadata.cartItemIds === cartItemIds &&
-        pi.metadata.userId === req.user.id.toString() &&
-        pi.metadata.type === 'cart_checkout' &&
-        // Solo reutilizar si está en estado requires_confirmation (pendiente de confirmación)
-        // Excluimos succeeded, canceled, requires_payment_method (falló), processing, etc.
-        pi.status === 'requires_confirmation'
-      );
+    if (forceNew) {
+      console.log('🔄 [BACKEND] forceNew=true - Saltando búsqueda de PaymentIntents existentes');
+    }
 
-      if (matchingIntent) {
-        console.log('✅ [BACKEND] PaymentIntent existente encontrado (reutilizando):', matchingIntent.id, 'status:', matchingIntent.status);
-        return res.json({
-          success: true,
-          clientSecret: matchingIntent.client_secret,
-          totalAmount,
-          cartItems,
-          reused: true, // Flag para debugging
+    // Buscar si ya existe un PaymentIntent para este carrito (solo si no se fuerza nuevo)
+    if (!forceNew) {
+      try {
+        console.log('🔍 [BACKEND] Buscando PaymentIntents existentes en Stripe...');
+        const existingIntents = await stripe.paymentIntents.list({
+          limit: 10,
         });
-      } else {
-        console.log('🔵 [BACKEND] No hay PaymentIntent reutilizable, creando nuevo');
+
+        console.log(`🔍 [BACKEND] Se encontraron ${existingIntents.data.length} PaymentIntents en total`);
+
+        // Filtrar por metadata que coincida con este carrito
+        const matchingIntent = existingIntents.data.find(pi =>
+          pi.metadata.cartItemIds === cartItemIds &&
+          pi.metadata.userId === req.user.id.toString() &&
+          pi.metadata.type === 'cart_checkout' &&
+          // Solo reutilizar si está en estado requires_confirmation (pendiente de confirmación)
+          // Excluimos succeeded, canceled, requires_payment_method (falló), processing, etc.
+          pi.status === 'requires_confirmation'
+        );
+
+        if (matchingIntent) {
+          console.log('✅ [BACKEND] PaymentIntent existente encontrado (reutilizando):', matchingIntent.id, 'status:', matchingIntent.status);
+          console.log('🔍 [BACKEND] client_secret:', matchingIntent.client_secret.substring(0, 20) + '...');
+          return res.json({
+            success: true,
+            clientSecret: matchingIntent.client_secret,
+            totalAmount,
+            cartItems,
+            reused: true, // Flag para debugging
+            paymentIntentId: matchingIntent.id,
+          });
+        } else {
+          console.log('🔵 [BACKEND] No hay PaymentIntent reutilizable, creando nuevo');
+        }
+      } catch (searchError) {
+        console.error('⚠️ [BACKEND] Error buscando PaymentIntents existentes:', searchError.message);
+        console.error('⚠️ [BACKEND] Tipo de error:', searchError.type);
+        // Continuar creando uno nuevo si la búsqueda falla
       }
-    } catch (searchError) {
-      console.error('⚠️ [BACKEND] Error buscando PaymentIntents existentes:', searchError.message);
-      // Continuar creando uno nuevo si la búsqueda falla
     }
 
     // Crear nuevo PaymentIntent
     console.log('🔵 [BACKEND] Creando NUEVO PaymentIntent');
+    console.log('🔵 [BACKEND] Usando STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY?.substring(0, 15) + '...');
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAmount * 100),
       currency: 'usd',
@@ -273,6 +295,7 @@ export const checkoutCart = async (req, res) => {
     });
 
     console.log('✅ [BACKEND] PaymentIntent creado exitosamente:', paymentIntent.id);
+    console.log('🔍 [BACKEND] Nuevo client_secret:', paymentIntent.client_secret.substring(0, 20) + '...');
 
     return res.json({
       success: true,
@@ -280,12 +303,16 @@ export const checkoutCart = async (req, res) => {
       totalAmount,
       cartItems,
       reused: false, // Flag para debugging
+      paymentIntentId: paymentIntent.id,
     });
   } catch (error) {
     console.error('❌ [BACKEND] Error creating cart checkout:', error);
+    console.error('❌ [BACKEND] Error type:', error.type);
+    console.error('❌ [BACKEND] Error message:', error.message);
     return res.status(500).json({
       success: false,
       message: 'Error procesando checkout del carrito: ' + error.message,
+      errorType: error.type,
     });
   }
 };
