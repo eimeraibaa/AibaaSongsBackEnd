@@ -8,9 +8,8 @@ import { storage } from '../services/storage.js';
 import { SunoService } from '../services/sunoService.js';
 import { resendEmailService as emailService } from '../services/resendEmailService.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2020-08-27',
-});
+// Sin especificar apiVersion usa la versión predeterminada de tu cuenta
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const sunoService = new SunoService();
 

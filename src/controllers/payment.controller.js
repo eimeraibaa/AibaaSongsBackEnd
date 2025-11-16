@@ -2,9 +2,8 @@ import Stripe from 'stripe';
 import { Payment } from '../models/payment.js';
 
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2020-08-27'
-});
+// Sin especificar apiVersion usa la versión predeterminada de tu cuenta
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const createPaymentIntent = async (req, res) => {
   try {
