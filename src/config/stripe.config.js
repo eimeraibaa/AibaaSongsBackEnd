@@ -3,7 +3,7 @@
  * Centralized configuration for Stripe products, prices, and checkout settings
  */
 
-export const STRIPE_CONFIG = {
+const STRIPE_CONFIG = {
   // Product Configuration
   products: {
     CUSTOM_SONG: {
@@ -55,7 +55,7 @@ export const STRIPE_CONFIG = {
  * @param {string} priceKey - Key from STRIPE_CONFIG.prices
  * @returns {string} Price formatted as dollars (e.g., "29.99")
  */
-export const getPriceInDollars = (priceKey = 'CUSTOM_SONG') => {
+const getPriceInDollars = (priceKey = 'CUSTOM_SONG') => {
   const price = STRIPE_CONFIG.prices[priceKey];
   if (!price) {
     throw new Error(`Price key "${priceKey}" not found in configuration`);
@@ -68,7 +68,7 @@ export const getPriceInDollars = (priceKey = 'CUSTOM_SONG') => {
  * @param {string} priceKey - Key from STRIPE_CONFIG.prices
  * @returns {number} Price in cents
  */
-export const getPriceInCents = (priceKey = 'CUSTOM_SONG') => {
+const getPriceInCents = (priceKey = 'CUSTOM_SONG') => {
   const price = STRIPE_CONFIG.prices[priceKey];
   if (!price) {
     throw new Error(`Price key "${priceKey}" not found in configuration`);
@@ -81,7 +81,7 @@ export const getPriceInCents = (priceKey = 'CUSTOM_SONG') => {
  * @param {string} priceKey - Key from STRIPE_CONFIG.prices
  * @returns {string} Currency code (e.g., "usd")
  */
-export const getCurrency = (priceKey = 'CUSTOM_SONG') => {
+const getCurrency = (priceKey = 'CUSTOM_SONG') => {
   const price = STRIPE_CONFIG.prices[priceKey];
   if (!price) {
     throw new Error(`Price key "${priceKey}" not found in configuration`);
@@ -95,7 +95,7 @@ export const getCurrency = (priceKey = 'CUSTOM_SONG') => {
  * @param {string} priceKey - Price key to use for calculation
  * @returns {Object} Object with amount in cents and dollars
  */
-export const calculateTotal = (cartItems, priceKey = 'CUSTOM_SONG') => {
+const calculateTotal = (cartItems, priceKey = 'CUSTOM_SONG') => {
   const itemCount = Array.isArray(cartItems) ? cartItems.length : 0;
   const priceInCents = getPriceInCents(priceKey);
   const totalInCents = itemCount * priceInCents;
