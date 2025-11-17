@@ -1,4 +1,3 @@
-// EmailService v2.1 - MEJORADO con bordes distintivos, letra y botones estilizados
 import { Resend } from 'resend';
 import crypto from 'crypto';
 
@@ -9,17 +8,13 @@ const BACKEND_URL = process.env.BACKEND_URL || 'https://api.makeursong.com';
 const LOGO_URL = process.env.LOGO_URL || 'https://makeursong.com/logo_sin_fondo.png';
 
 /**
- * Servicio de Email MEJORADO - Make Ur Song
+ * Servicio de Email FINAL - Make Ur Song
  *
- * NUEVAS Características v2.1:
- * ✅ Bordes distintivos: Canción principal (dorado sólido) vs Regalo (rojo punteado)
- * ✅ Visualización de letra: Primeras 4 líneas + enlace "Ver más"
- * ✅ Botones estilizados: Gradientes modernos + nuevo botón "Compartir"
- *
- * Características anteriores:
+ * Características:
  * - Optimizado para iPhone/iOS
  * - Magic token auto-login
  * - Auto-play y auto-download
+ * - Sin botón compartir (se hace desde web)
  * - Géneros traducidos correctamente
  * - Logo integrado
  * - Regalo = misma canción, versión alternativa
@@ -148,14 +143,8 @@ class EmailService {
 
   /**
    * Genera el HTML de una canción individual optimizado para iOS
-   * MEJORADO v2.1: Incluye bordes distintivos, letra y botones estilizados
-   * 
-   * @param {Object} song - Objeto con datos de la canción
-   * @param {Object} texts - Textos traducidos según idioma
-   * @param {string} magicToken - Token de autenticación
-   * @param {boolean} isGift - Si es true, aplica estilos de regalo
    */
-  generateSongHTML(song, texts, magicToken, isGift = false) {
+  generateSongHTML(song, texts, magicToken) {
     const genreText = texts.language === 'en'
       ? this.translateGenreToEnglish(song.genre || '')
       : (song.genre || '');
@@ -164,32 +153,16 @@ class EmailService {
       ? ` • ✨ ${texts.variationLabels[song.variation]}`
       : '';
 
-    // URLs con magic token y parámetros para auto-play/download/share
+    // URLs con magic token y parámetros para auto-play/download
     const listenUrl = `${FRONTEND_URL}/my-songs?token=${magicToken}&play=${song.id}`;
     const downloadUrl = `${FRONTEND_URL}/my-songs?token=${magicToken}&download=${song.id}`;
-    const shareUrl = `${FRONTEND_URL}/my-songs?token=${magicToken}&share=${song.id}`;
-
-    // MEJORA 1: Estilos distintivos según si es regalo o canción principal
-    const cardStyle = isGift
-      ? `background-color: #ffffff;
-         border-radius: 12px;
-         padding: 25px;
-         margin: 0;
-         border: 2px solid #ffb74d;
-         box-shadow: 0 2px 8px rgba(255, 152, 0, 0.15);`
-      : `background-color: #ffffff;
-         border-radius: 12px;
-         padding: 25px;
-         margin: 0 0 20px 0;
-         border: 3px solid #e69216;
-         box-shadow: 0 4px 16px rgba(230, 146, 22, 0.2);`;
 
     return `
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${cardStyle}">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; padding: 20px; margin: 0 0 20px 0; border: 1px solid #f0f0f0;">
         <tr>
           <td>
             <!-- Título -->
-            <p style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #333;">
+            <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #333;">
               ${song.title || texts.untitled}
             </p>
 
@@ -200,108 +173,48 @@ class EmailService {
               </p>
             ` : ''}
 
-            <!-- MEJORA 2: Sección de letra de la canción -->
-            ${song.lyrics ? `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                     style="margin: 15px 0;
-                            padding: 15px;
-                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                            border-radius: 8px;
-                            border-left: 4px solid #6c757d;">
-                <tr>
-                  <td>
-                    <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #495057;">
-                      📝 ${texts.lyricsTitle}
-                    </p>
-                    <div style="padding: 12px;
-                                background-color: #ffffff;
-                                border-radius: 6px;
-                                font-family: Georgia, serif;
-                                font-style: italic;
-                                font-size: 13px;
-                                line-height: 1.7;
-                                color: #495057;
-                                white-space: pre-line;">
-                      ${song.lyrics.split('\n').slice(0, 4).join('\n')}${song.lyrics.split('\n').length > 4 ? '\n...' : ''}
-                    </div>
-                    ${song.lyrics.split('\n').length > 4 ? `
-                      <p style="margin: 10px 0 0 0; text-align: right;">
-                        <a href="${listenUrl}" style="color: #e69216; text-decoration: none; font-weight: 600; font-size: 13px;">
-                          ${texts.viewFullLyrics} →
-                        </a>
-                      </p>
-                    ` : ''}
-                  </td>
-                </tr>
-              </table>
-            ` : ''}
-
-            <!-- MEJORA 3: Botones mejorados con gradientes -->
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top: 20px;">
+            <!-- Botones optimizados para iOS -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top: 10px;">
               <tr>
-                <!-- Botón Escuchar (Gradiente Naranja) -->
-                <td style="padding: 0 6px 8px 0;">
+                <!-- Botón Escuchar (auto-play) -->
+                <td style="padding-right: 10px; padding-bottom: 8px;">
                   <a href="${listenUrl}"
                      target="_blank"
                      style="display: inline-block !important;
                             color: #ffffff !important;
                             text-decoration: none !important;
-                            font-size: 15px;
-                            font-weight: 700;
-                            padding: 14px 24px;
-                            border-radius: 10px;
-                            background: linear-gradient(135deg, #e69216 0%, #ff9800 100%);
+                            font-size: 14px;
+                            font-weight: 600;
+                            padding: 12px 24px;
+                            border-radius: 6px;
+                            background-color: #e69216;
                             border: none;
                             text-align: center;
                             min-width: 120px;
-                            box-shadow: 0 4px 12px rgba(230, 146, 22, 0.3);
                             mso-padding-alt: 0;
                             -webkit-text-size-adjust: none;">
                     🎵 ${texts.listenLink}
                   </a>
                 </td>
 
-                <!-- Botón Descargar (Gradiente Verde) -->
-                <td style="padding: 0 6px 8px 0;">
+                <!-- Botón Descargar (auto-download) -->
+                <td style="padding-bottom: 8px;">
                   <a href="${downloadUrl}"
                      target="_blank"
                      style="display: inline-block !important;
                             color: #ffffff !important;
                             text-decoration: none !important;
-                            font-size: 15px;
-                            font-weight: 700;
-                            padding: 14px 24px;
-                            border-radius: 10px;
-                            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+                            font-size: 14px;
+                            font-weight: 600;
+                            padding: 12px 24px;
+                            border-radius: 6px;
+                            background-color: #4CAF50;
                             border: none;
                             text-align: center;
                             min-width: 120px;
-                            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
                             mso-padding-alt: 0;
                             -webkit-text-size-adjust: none;">
                     📥 ${texts.downloadLink}
-                  </a>
-                </td>
-
-                <!-- Botón Compartir (Gradiente Azul) - NUEVO -->
-                <td style="padding: 0 0 8px 0;">
-                  <a href="${shareUrl}"
-                     target="_blank"
-                     style="display: inline-block !important;
-                            color: #ffffff !important;
-                            text-decoration: none !important;
-                            font-size: 15px;
-                            font-weight: 700;
-                            padding: 14px 24px;
-                            border-radius: 10px;
-                            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);
-                            border: none;
-                            text-align: center;
-                            min-width: 120px;
-                            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-                            mso-padding-alt: 0;
-                            -webkit-text-size-adjust: none;">
-                    📤 ${texts.shareLink}
                   </a>
                 </td>
               </tr>
@@ -314,14 +227,13 @@ class EmailService {
 
   /**
    * Genera el template completo del email optimizado para iOS
-   * MEJORADO v2.1: Contenedor de regalo con estilos distintivos
    */
   generateEmailTemplate(orderId, songs, detectedLanguage, magicToken) {
     // Separar canción principal y regalo
     const mainSongs = songs.filter(s => !s.isGift);
     const giftSongs = songs.filter(s => s.isGift);
 
-    // Textos bilingües - ACTUALIZADO con nuevos textos
+    // Textos bilingües
     const texts = {
       language: detectedLanguage,
       ...(detectedLanguage === 'en' ? {
@@ -342,11 +254,8 @@ class EmailService {
           extended: 'Extended Version',
           remix: 'Remix'
         },
-        lyricsTitle: 'Song Lyrics',
-        viewFullLyrics: 'View full lyrics',
         listenLink: 'Listen',
         downloadLink: 'Download',
-        shareLink: 'Share',
         viewAllButton: '🎵 View all my songs',
         tipsTitle: '💡 Tips & Recommendations',
         tip1: 'Click "Listen" to go directly to your song and play it',
@@ -383,11 +292,8 @@ class EmailService {
           extended: 'Versión Extendida',
           remix: 'Remix'
         },
-        lyricsTitle: 'Letra de la canción',
-        viewFullLyrics: 'Ver letra completa',
         listenLink: 'Escuchar',
         downloadLink: 'Descargar',
-        shareLink: 'Compartir',
         viewAllButton: '🎵 Ver todas mis canciones',
         tipsTitle: '💡 Consejos y Recomendaciones',
         tip1: 'Haz clic en "Escuchar" para ir directamente a tu canción y reproducirla',
@@ -409,14 +315,14 @@ class EmailService {
       })
     };
 
-    // Generar HTML para canción principal (solo la primera) - MEJORADO: pasar isGift=false
+    // Generar HTML para canción principal (solo la primera)
     const mainSongHTML = mainSongs.length > 0
-      ? this.generateSongHTML(mainSongs[0], texts, magicToken, false)
+      ? this.generateSongHTML(mainSongs[0], texts, magicToken)
       : '';
 
-    // Generar HTML para regalo (si existe) - MEJORADO: pasar isGift=true
+    // Generar HTML para regalo (si existe)
     const giftSongHTML = giftSongs.length > 0
-      ? this.generateSongHTML(giftSongs[0], texts, magicToken, true)
+      ? this.generateSongHTML(giftSongs[0], texts, magicToken)
       : '';
 
     // URL para ver todas las canciones
@@ -522,29 +428,19 @@ class EmailService {
               </div>
 
               ${giftSongs.length > 0 ? `
-              <!-- Regalo Especial - MEJORADO con estilos distintivos -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                     style="margin-bottom: 35px;
-                            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-                            padding: 30px 25px;
-                            border-radius: 16px;
-                            border: 3px dashed #ff6b6b;
-                            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.2);">
-                <tr>
-                  <td>
-                    <h2 style="margin: 0 0 10px 0; font-size: 22px; color: #d32f2f; font-weight: 700; border-bottom: 3px solid #ff6b6b; padding-bottom: 10px;">
-                      ${texts.giftTitle}
-                    </h2>
-                    <p style="margin: 0 0 5px 0; font-size: 15px; color: #666; line-height: 1.6; font-style: italic;">
-                      ${texts.giftText}
-                    </p>
-                    <p style="margin: 0 0 20px 0; font-size: 15px; color: #666; line-height: 1.6; font-style: italic;">
-                      ${texts.giftText2}
-                    </p>
-                    ${giftSongHTML}
-                  </td>
-                </tr>
-              </table>
+              <!-- Regalo Especial -->
+              <div style="margin-bottom: 35px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 25px; border-radius: 12px; border: 2px dashed #e69216;">
+                <h2 style="margin: 0 0 10px 0; font-size: 22px; color: #d67d0a; font-weight: 700;">
+                  ${texts.giftTitle}
+                </h2>
+                <p style="margin: 0 0 5px 0; font-size: 15px; color: #666; line-height: 1.6;">
+                  ${texts.giftText}
+                </p>
+                <p style="margin: 0 0 20px 0; font-size: 15px; color: #666; line-height: 1.6;">
+                  ${texts.giftText2}
+                </p>
+                ${giftSongHTML}
+              </div>
               ` : ''}
 
               <!-- Botón Ver todas mis canciones -->
@@ -798,16 +694,27 @@ class EmailService {
   /**
    * Método de compatibilidad: sendSongsReadyEmail
    * Wrapper para el nuevo método sendEmail()
+   *
+   * @param {string} userEmail - Email del usuario
+   * @param {Array} songs - Array de canciones completadas
+   * @param {number} orderId - ID de la orden
    */
   async sendSongsReadyEmail(userEmail, songs, orderId) {
     console.log('⚠️ Usando método de compatibilidad sendSongsReadyEmail()');
     console.log('💡 Considera actualizar a sendEmail(orderId, userEmail, userId, songs)');
 
+    // Llamar al nuevo método sendEmail con userId = 'legacy'
+    // En una actualización futura, el userId debería obtenerse del contexto
     return await this.sendEmail(orderId, userEmail, 'legacy', songs);
   }
 
   /**
    * Método de compatibilidad: sendGenerationFailedEmail
+   * Envía email cuando falla la generación de canciones
+   *
+   * @param {string} userEmail - Email del usuario
+   * @param {number} orderId - ID de la orden
+   * @param {Array} failedSongs - Canciones que fallaron
    */
   async sendGenerationFailedEmail(userEmail, orderId, failedSongs) {
     console.log('⚠️ Usando método de compatibilidad sendGenerationFailedEmail()');
@@ -836,6 +743,8 @@ class EmailService {
     <tr>
       <td align="center" style="padding: 30px 0;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
           <tr>
             <td style="background-color: #f44336; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
               <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
@@ -846,6 +755,8 @@ class EmailService {
               </p>
             </td>
           </tr>
+
+          <!-- Content -->
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px 0; font-size: 16px; color: #333; line-height: 1.6;">
@@ -854,14 +765,17 @@ class EmailService {
               <p style="margin: 0 0 20px 0; font-size: 16px; color: #333; line-height: 1.6;">
                 Lamentamos informarte que hubo un problema al generar algunas de tus canciones:
               </p>
+
               <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 20px 0; border-radius: 4px;">
                 <p style="margin: 0; font-size: 14px; color: #856404; white-space: pre-line;">
                   ${failedList}
                 </p>
               </div>
+
               <p style="margin: 20px 0 0 0; font-size: 16px; color: #333; line-height: 1.6;">
                 No te preocupes, nuestro equipo está revisando el problema y te contactaremos pronto para resolverlo.
               </p>
+
               <div style="text-align: center; margin-top: 30px;">
                 <a href="${FRONTEND_URL}/orders/${orderId}"
                    target="_blank"
@@ -876,6 +790,7 @@ class EmailService {
                   Ver detalles de mi orden
                 </a>
               </div>
+
               <p style="margin: 30px 0 0 0; font-size: 14px; color: #666; text-align: center;">
                 Si necesitas ayuda, contáctanos en:
                 <a href="mailto:${EMAIL_FROM}" style="color: #e69216; text-decoration: none; font-weight: 600;">
@@ -884,6 +799,8 @@ class EmailService {
               </p>
             </td>
           </tr>
+
+          <!-- Footer -->
           <tr>
             <td style="background-color: #f5f5f5; padding: 25px 30px; text-align: center; border-radius: 0 0 12px 12px;">
               <p style="margin: 0; font-size: 12px; color: #999;">
@@ -891,6 +808,7 @@ class EmailService {
               </p>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
@@ -922,6 +840,12 @@ class EmailService {
 
   /**
    * Método de compatibilidad: sendTempPasswordEmail
+   * Envía email con contraseña temporal al usuario
+   *
+   * @param {string} userEmail - Email del usuario
+   * @param {string} userName - Nombre del usuario
+   * @param {string} tempPassword - Contraseña temporal
+   * @param {string} language - Idioma del email ('es' o 'en')
    */
   async sendTempPasswordEmail(userEmail, userName, tempPassword, language = 'es') {
     console.log('⚠️ Usando método de compatibilidad sendTempPasswordEmail()');
@@ -995,6 +919,8 @@ class EmailService {
     <tr>
       <td align="center" style="padding: 30px 0;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
               <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: 700;">
@@ -1005,6 +931,8 @@ class EmailService {
               </p>
             </td>
           </tr>
+
+          <!-- Content -->
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px 0; font-size: 16px; color: #333;">
@@ -1013,6 +941,7 @@ class EmailService {
               <p style="margin: 0 0 30px 0; font-size: 16px; color: #333; line-height: 1.6;">
                 ${texts.intro}
               </p>
+
               <div style="background-color: #fff3e0; border-left: 4px solid #e69216; padding: 25px; margin: 20px 0; border-radius: 4px;">
                 <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">
                   <strong>📧 ${texts.emailLabel}</strong>
@@ -1027,6 +956,7 @@ class EmailService {
                   ${tempPassword}
                 </div>
               </div>
+
               <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 4px;">
                 <p style="margin: 0 0 10px 0; font-size: 15px; color: #856404; font-weight: 700;">
                   ${texts.importantTitle}
@@ -1037,6 +967,7 @@ class EmailService {
                   <li>${texts.warning3}</li>
                 </ul>
               </div>
+
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${FRONTEND_URL}/login"
                    target="_blank"
@@ -1052,6 +983,7 @@ class EmailService {
                   ${texts.loginButton}
                 </a>
               </div>
+
               <div style="margin: 30px 0 0 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
                 <p style="margin: 0 0 15px 0; font-size: 15px; color: #333; font-weight: 600;">
                   ${texts.stepsTitle}
@@ -1064,6 +996,8 @@ class EmailService {
               </div>
             </td>
           </tr>
+
+          <!-- Footer -->
           <tr>
             <td style="background-color: #f5f5f5; padding: 25px 30px; text-align: center; border-radius: 0 0 12px 12px;">
               <p style="margin: 0 0 8px 0; font-size: 12px; color: #999;">
@@ -1074,6 +1008,7 @@ class EmailService {
               </p>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
