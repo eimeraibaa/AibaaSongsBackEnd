@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "migrate:sessions": "node scripts/migrate-sessions.js"
+    "migrate:sessions": "node scripts/migrate-sessions.js",
+    "test:webhook": "node test-webhook.js",
+    "diagnose": "node scripts/diagnose-webhook.js"
   },
   "keywords": [],
   "author": "",
