@@ -15,9 +15,6 @@ const app = express()
 // Confiar en el proxy de Railway para cookies seguras
 app.set('trust proxy', 1);
 
-app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ limit: "2mb", extended: true }));
-
 app.use(cors({
   origin: true,          // lee el Origin de la petición y lo responde
   credentials: true, // Permite cookies y headers de autorización
@@ -34,19 +31,18 @@ app.use((req, res, next) => {
   next()
 })
 
-// IMPORTANTE: Webhook de Stripe debe recibir raw bytes para verificar la firma
-// Webhook de Suno debe recibir JSON parseado
-// Usamos middleware condicional basado en la ruta
+// IMPORTANTE: Webhook de Stripe DEBE recibir raw bytes ANTES de cualquier JSON parser
+// Por eso aplicamos las rutas de webhook ANTES del express.json()
 
-// Middleware personalizado para webhooks
+// Middleware raw para la ruta específica de Stripe
 app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
-app.use('/webhook/suno', express.json());
 
-// Aplicar las rutas de webhook
+// Aplicar SOLO las rutas de webhook ANTES del JSON parser
 app.use('/webhook', webhookRoutes);
 
-// Middleware to parse JSON bodies para el resto de rutas
-app.use(express.json());
+// AHORA SÍ aplicar JSON parser para el resto de las rutas
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ limit: "2mb", extended: true }));
 
 // Configurar autenticación con Passport
 setupAuth(app);

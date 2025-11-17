@@ -7,8 +7,8 @@ const STRIPE_CONFIG = {
   // Product Configuration
   products: {
     CUSTOM_SONG: {
-      name: 'Custom AI Song',
-      description: 'Personalized AI-generated song with custom lyrics',
+      name: 'Custom Song',
+      description: 'Personalized generated song with custom lyrics',
       metadata: {
         type: 'custom_song',
       }
