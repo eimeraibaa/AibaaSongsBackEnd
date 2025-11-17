@@ -3,7 +3,7 @@
  * Centralized configuration for Stripe products, prices, and checkout settings
  */
 
-const STRIPE_CONFIG = {
+export const STRIPE_CONFIG = {
   // Product Configuration
   products: {
     CUSTOM_SONG: {
@@ -55,7 +55,7 @@ const STRIPE_CONFIG = {
  * @param {string} priceKey - Key from STRIPE_CONFIG.prices
  * @returns {string} Price formatted as dollars (e.g., "29.99")
  */
-const getPriceInDollars = (priceKey = 'CUSTOM_SONG') => {
+export const getPriceInDollars = (priceKey = 'CUSTOM_SONG') => {
   const price = STRIPE_CONFIG.prices[priceKey];
   if (!price) {
     throw new Error(`Price key "${priceKey}" not found in configuration`);
@@ -68,7 +68,7 @@ const getPriceInDollars = (priceKey = 'CUSTOM_SONG') => {
  * @param {string} priceKey - Key from STRIPE_CONFIG.prices
  * @returns {number} Price in cents
  */
-const getPriceInCents = (priceKey = 'CUSTOM_SONG') => {
+export const getPriceInCents = (priceKey = 'CUSTOM_SONG') => {
   const price = STRIPE_CONFIG.prices[priceKey];
   if (!price) {
     throw new Error(`Price key "${priceKey}" not found in configuration`);
@@ -81,7 +81,7 @@ const getPriceInCents = (priceKey = 'CUSTOM_SONG') => {
  * @param {string} priceKey - Key from STRIPE_CONFIG.prices
  * @returns {string} Currency code (e.g., "usd")
  */
-const getCurrency = (priceKey = 'CUSTOM_SONG') => {
+export const getCurrency = (priceKey = 'CUSTOM_SONG') => {
   const price = STRIPE_CONFIG.prices[priceKey];
   if (!price) {
     throw new Error(`Price key "${priceKey}" not found in configuration`);
@@ -95,7 +95,7 @@ const getCurrency = (priceKey = 'CUSTOM_SONG') => {
  * @param {string} priceKey - Price key to use for calculation
  * @returns {Object} Object with amount in cents and dollars
  */
-const calculateTotal = (cartItems, priceKey = 'CUSTOM_SONG') => {
+export const calculateTotal = (cartItems, priceKey = 'CUSTOM_SONG') => {
   const itemCount = Array.isArray(cartItems) ? cartItems.length : 0;
   const priceInCents = getPriceInCents(priceKey);
   const totalInCents = itemCount * priceInCents;
