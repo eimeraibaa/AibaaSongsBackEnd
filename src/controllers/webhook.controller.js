@@ -6,7 +6,7 @@
 import Stripe from 'stripe';
 import { storage } from '../services/storage.js';
 import { SunoService } from '../services/sunoService.js';
-import { resendEmailService as emailService } from '../services/resendEmailService.js';
+import { emailService } from '../services/emailService.js';
 
 // Sin especificar apiVersion usa la versión predeterminada de tu cuenta
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
