@@ -108,7 +108,7 @@ const calculateTotal = (cartItems, priceKey = 'CUSTOM_SONG') => {
   };
 };
 
-module.exports = {
+export {
   STRIPE_CONFIG,
   getPriceInDollars,
   getPriceInCents,
