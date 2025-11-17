@@ -46,6 +46,10 @@ export const handleStripeWebhook = async (req, res) => {
 
     // Manejar el evento según su tipo
     switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object);
+        break;
+
       case 'payment_intent.succeeded':
         await handlePaymentSuccess(event.data.object);
         break;
@@ -68,7 +72,132 @@ export const handleStripeWebhook = async (req, res) => {
 };
 
 /**
- * Procesa un pago exitoso
+ * Procesa un checkout session completado (nuevo flujo con Stripe Checkout)
+ * 1. Obtiene los items del cart desde metadata de la sesión
+ * 2. Crea la orden (Order)
+ * 3. Crea los order items con las letras del cart
+ * 4. Limpia el cart del usuario
+ * 5. Dispara la generación de canciones con Suno
+ */
+async function handleCheckoutSessionCompleted(session) {
+  try {
+    console.log('✅ Checkout Session completado:', session.id);
+    console.log('💳 Payment Intent:', session.payment_intent);
+    console.log('💰 Monto pagado:', session.amount_total / 100, session.currency.toUpperCase());
+
+    // Extraer metadata de la sesión
+    const { userId, cartItemIds, type } = session.metadata;
+
+    if (type !== 'cart_checkout') {
+      console.log('ℹ️ Checkout Session no es de cart checkout, ignorando');
+      return;
+    }
+
+    if (!userId || !cartItemIds) {
+      console.error('❌ Metadata incompleta en Checkout Session:', session.metadata);
+      return;
+    }
+
+    // Parsear los IDs del cart
+    const itemIds = cartItemIds.split(',').map(id => parseInt(id, 10));
+
+    // 1. Obtener items del cart con sus letras
+    console.log('📦 Obteniendo items del cart:', itemIds);
+    const cartItems = [];
+    for (const itemId of itemIds) {
+      const item = await storage.getCartItemById(itemId);
+      if (item) {
+        console.log(`📊 CartItem ${itemId}:`);
+        console.log(`   - Dedicated to: ${item.dedicatedTo || 'N/A'}`);
+        console.log(`   - Language: ${item.language || 'N/A'}`);
+        console.log(`   - Price: ${item.price}`);
+        cartItems.push(item);
+      }
+    }
+
+    if (cartItems.length === 0) {
+      console.error('❌ No se encontraron items del cart');
+      return;
+    }
+
+    // 2. Obtener email del usuario (primero del checkout, luego de DB)
+    let userEmail = session.customer_email || session.customer_details?.email;
+
+    if (!userEmail) {
+      const user = await storage.getUser(parseInt(userId, 10));
+      userEmail = user?.email || null;
+    }
+
+    if (!userEmail) {
+      console.warn('⚠️ No se pudo obtener el email del usuario');
+    }
+
+    // 3. Crear la orden (Order) usando el payment_intent de la sesión
+    const totalAmount = session.amount_total / 100; // Convertir de cents a dollars
+
+    console.log('📝 Creando orden...');
+    const order = await storage.createOrder({
+      userId: parseInt(userId, 10),
+      stripePaymentIntentId: session.payment_intent, // ID del PaymentIntent asociado
+      totalAmount,
+      status: 'completed',
+      userEmail,
+    });
+
+    console.log('✅ Orden creada:', order.id);
+
+    // 4. Crear OrderItems con las letras del cart
+    console.log('📝 Creando order items...');
+    const orderItemPromises = cartItems.map(cartItem => {
+      const languageToUse = cartItem.language;
+      console.log(`📝 Creando OrderItem para cartItem ${cartItem.id}:`);
+      console.log(`   - Language: "${languageToUse}"`);
+
+      return storage.createOrderItem({
+        orderId: order.id,
+        dedicatedTo: cartItem.dedicatedTo,
+        prompt: cartItem.prompt,
+        genres: cartItem.genres,
+        lyrics: cartItem.lyrics, // 🔑 CRÍTICO: Copiar las letras del cart
+        language: languageToUse, // 🌐 Copiar el idioma detectado
+        singerGender: cartItem.singerGender || 'male', // 🎤 Copiar el género del cantante
+        price: cartItem.price,
+        emotion: cartItem.emotion,
+        status: 'processing',
+      });
+    });
+
+    const orderItems = await Promise.all(orderItemPromises);
+    console.log('✅ Order items creados:', orderItems.length);
+    orderItems.forEach((item, i) => {
+      console.log(`   ${i + 1}. OrderItem ID: ${item.id}, Language: "${item.language}"`);
+    });
+
+    // 5. Limpiar el cart del usuario
+    console.log('🧹 Limpiando cart del usuario...');
+    await storage.clearCart(parseInt(userId, 10));
+
+    // 6. Disparar generación de canciones con Suno (asíncrono)
+    console.log('🎵 Iniciando generación de canciones con Suno...');
+
+    // Ejecutar en background sin bloquear la respuesta del webhook
+    setImmediate(() => {
+      generateSongsForOrder(order.id).catch(error => {
+        console.error('❌ Error en generación de canciones:', error);
+      });
+    });
+
+    console.log('✅ Proceso de checkout session completado exitosamente');
+
+  } catch (error) {
+    console.error('❌ Error procesando checkout session:', error);
+    console.error('Stack:', error.stack);
+    // No lanzamos el error para no fallar el webhook de Stripe
+  }
+}
+
+/**
+ * Procesa un pago exitoso (flujo legacy con PaymentIntent directo)
  * 1. Obtiene los items del cart desde metadata
  * 2. Crea la orden (Order)
  * 3. Crea los order items con las letras del cart

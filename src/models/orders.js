@@ -93,7 +93,7 @@ export const OrderItem = sequelize.define('OrderItem', {
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    defaultValue: '29.99',
+    // No default value - price must be provided from cart item or configuration
   },
   status: {
     type: DataTypes.STRING,

@@ -2,6 +2,12 @@
 import Stripe from 'stripe';
 import { insertCartItemSchema } from '../shared/schema.js';
 import { storage } from '../services/storage.js'; // ajusta la ruta si tu storage está en otro sitio
+import {
+  STRIPE_CONFIG,
+  getPriceInCents,
+  getPriceInDollars,
+  calculateTotal
+} from '../config/stripe.config.js';
 
 // Inicializa Stripe (sin especificar apiVersion usa la versión predeterminada de tu cuenta)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -36,7 +42,7 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // Crear item en el carrito
+    // Crear item en el carrito con precio dinámico
     const cartItem = await storage.addToCart({
       userId,
       dedicatedTo,
@@ -50,7 +56,7 @@ export const addToCart = async (req, res) => {
       occasion: occasion || null,                  // NUEVO
       language: language || 'en',
       status: 'draft',
-      price: 29.99
+      price: getPriceInDollars('CUSTOM_SONG') // Precio dinámico desde configuración
     });
 
     return res.status(201).json(cartItem);
@@ -195,7 +201,7 @@ export const removeFromCart = async (req, res) => {
     }
   };
 
-// POST /api/cart/checkout
+// POST /api/cart/checkout - Crea una Stripe Checkout Session
 export const checkoutCart = async (req, res) => {
   try {
     console.log('🔵 [BACKEND] POST /cart/checkout llamado para userId:', req.user.id);
@@ -218,95 +224,92 @@ export const checkoutCart = async (req, res) => {
 
     console.log('🔵 [BACKEND] Items en carrito:', cartItems.length);
 
-    // Asumimos que cada item tiene un campo `price` en string or number
-    const totalAmount = cartItems.reduce((sum, item) => {
-      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-      return sum + price;
-    }, 0);
+    // Calcular total dinámicamente
+    const { cents: totalInCents, dollars: totalInDollars, currency, itemCount } = calculateTotal(cartItems, 'CUSTOM_SONG');
+    console.log(`🔵 [BACKEND] Total calculado: ${totalInDollars} ${currency.toUpperCase()} (${itemCount} items)`);
 
-    // 🔧 IDEMPOTENCIA: Crear clave única basada en el contenido del carrito
-    const cartItemIds = cartItems.map(i => i.id).sort().join(',');
-    const idempotencyKey = `cart_${req.user.id}_${cartItemIds}`;
+    // Preparar line_items para Stripe Checkout
+    const lineItems = cartItems.map(item => {
+      // Extraer información relevante para el nombre del producto
+      const songDescription = item.dedicatedTo
+        ? `Song dedicated to ${item.dedicatedTo}`
+        : 'Custom AI-generated song';
 
-    console.log('🔵 [BACKEND] Idempotency key:', idempotencyKey);
+      const genres = Array.isArray(item.genres) ? item.genres.join(', ') : 'Various';
 
-    // ⚙️ Parámetro para forzar creación de nuevo PaymentIntent (útil al cambiar de cuenta Stripe)
-    const forceNew = req.query.forceNew === 'true' || req.body.forceNew === true;
-
-    if (forceNew) {
-      console.log('🔄 [BACKEND] forceNew=true - Saltando búsqueda de PaymentIntents existentes');
-    }
-
-    // Buscar si ya existe un PaymentIntent para este carrito (solo si no se fuerza nuevo)
-    if (!forceNew) {
-      try {
-        console.log('🔍 [BACKEND] Buscando PaymentIntents existentes en Stripe...');
-        const existingIntents = await stripe.paymentIntents.list({
-          limit: 10,
-        });
-
-        console.log(`🔍 [BACKEND] Se encontraron ${existingIntents.data.length} PaymentIntents en total`);
-
-        // Filtrar por metadata que coincida con este carrito
-        const matchingIntent = existingIntents.data.find(pi =>
-          pi.metadata.cartItemIds === cartItemIds &&
-          pi.metadata.userId === req.user.id.toString() &&
-          pi.metadata.type === 'cart_checkout' &&
-          // Solo reutilizar si está en estado requires_confirmation (pendiente de confirmación)
-          // Excluimos succeeded, canceled, requires_payment_method (falló), processing, etc.
-          pi.status === 'requires_confirmation'
-        );
-
-        if (matchingIntent) {
-          console.log('✅ [BACKEND] PaymentIntent existente encontrado (reutilizando):', matchingIntent.id, 'status:', matchingIntent.status);
-          console.log('🔍 [BACKEND] client_secret:', matchingIntent.client_secret.substring(0, 20) + '...');
-          return res.json({
-            success: true,
-            clientSecret: matchingIntent.client_secret,
-            totalAmount,
-            cartItems,
-            reused: true, // Flag para debugging
-            paymentIntentId: matchingIntent.id,
-          });
-        } else {
-          console.log('🔵 [BACKEND] No hay PaymentIntent reutilizable, creando nuevo');
-        }
-      } catch (searchError) {
-        console.error('⚠️ [BACKEND] Error buscando PaymentIntents existentes:', searchError.message);
-        console.error('⚠️ [BACKEND] Tipo de error:', searchError.type);
-        // Continuar creando uno nuevo si la búsqueda falla
-      }
-    }
-
-    // Crear nuevo PaymentIntent
-    console.log('🔵 [BACKEND] Creando NUEVO PaymentIntent');
-    console.log('🔵 [BACKEND] Usando STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY?.substring(0, 15) + '...');
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totalAmount * 100),
-      currency: 'usd',
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        type: 'cart_checkout',
-        cartItemIds,
-        userId: req.user.id.toString(),
-        createdAt: new Date().toISOString(),
-      },
+      return {
+        price_data: {
+          currency: currency,
+          unit_amount: getPriceInCents('CUSTOM_SONG'), // Precio dinámico
+          product_data: {
+            name: STRIPE_CONFIG.products.CUSTOM_SONG.name,
+            description: `${songDescription} (${genres})`,
+            metadata: {
+              cartItemId: item.id.toString(),
+              genres: genres,
+              singerGender: item.singerGender || 'male',
+              language: item.language || 'en'
+            }
+          }
+        },
+        quantity: 1
+      };
     });
 
-    console.log('✅ [BACKEND] PaymentIntent creado exitosamente:', paymentIntent.id);
-    console.log('🔍 [BACKEND] Nuevo client_secret:', paymentIntent.client_secret.substring(0, 20) + '...');
+    // Metadata para rastrear el checkout
+    const cartItemIds = cartItems.map(i => i.id).sort().join(',');
+    const metadata = {
+      type: 'cart_checkout',
+      cartItemIds,
+      userId: req.user.id.toString(),
+      itemCount: itemCount.toString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Agregar email del usuario si está disponible
+    const customerEmail = req.user.email || cartItems.find(item => item.userEmail)?.userEmail;
+
+    // Crear Stripe Checkout Session
+    console.log('🔵 [BACKEND] Creando Stripe Checkout Session...');
+
+    const sessionParams = {
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: STRIPE_CONFIG.checkout.mode,
+      success_url: STRIPE_CONFIG.checkout.successUrl,
+      cancel_url: STRIPE_CONFIG.checkout.cancelUrl,
+      metadata,
+      allow_promotion_codes: STRIPE_CONFIG.checkout.allowPromotionCodes,
+      // Configuración de expiración (24 horas)
+      expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
+    };
+
+    // Agregar email si existe
+    if (customerEmail) {
+      sessionParams.customer_email = customerEmail;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log('✅ [BACKEND] Checkout Session creado exitosamente:', session.id);
+    console.log('🔍 [BACKEND] Session URL:', session.url);
 
     return res.json({
       success: true,
-      clientSecret: paymentIntent.client_secret,
-      totalAmount,
-      cartItems,
-      reused: false, // Flag para debugging
-      paymentIntentId: paymentIntent.id,
+      sessionId: session.id,
+      sessionUrl: session.url, // URL para redirigir al usuario
+      totalAmount: totalInDollars,
+      currency: currency.toUpperCase(),
+      itemCount,
+      cartItems: cartItems.map(item => ({
+        id: item.id,
+        dedicatedTo: item.dedicatedTo,
+        genres: item.genres,
+        price: item.price
+      }))
     });
   } catch (error) {
-    console.error('❌ [BACKEND] Error creating cart checkout:', error);
+    console.error('❌ [BACKEND] Error creating checkout session:', error);
     console.error('❌ [BACKEND] Error type:', error.type);
     console.error('❌ [BACKEND] Error message:', error.message);
     return res.status(500).json({

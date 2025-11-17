@@ -53,7 +53,7 @@ export const CartItem = sequelize.define(
     price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      defaultValue: 30.00,
+      // No default value - price must be provided from configuration
     },
     favoriteMemory: {
       type: DataTypes.TEXT,
