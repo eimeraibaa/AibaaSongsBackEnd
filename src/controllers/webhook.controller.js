@@ -267,12 +267,6 @@ async function generateSongsForOrder(orderId) {
       }
     }
 
-    const createdSongs = await storage.getOrderSongs(order.id);
-    console.log(`✅ [Webhook] Total canciones creadas para orden ${order.id}: ${createdSongs.length}`);
-    createdSongs.forEach((song, i) => {
-      console.log(`   ${i + 1}. Song ID: ${song.id}, OrderItem: ${song.orderItemId}, Status: ${song.status}`);
-    });
-
     console.log('✅ Proceso de generación iniciado para todos los items');
 
     // Solo esperar y notificar si estamos usando polling (sin callbackUrl)
@@ -500,70 +494,94 @@ export const handleSunoWebhook = async (req, res) => {
     const affectedOrders = new Set(); // Para rastrear qué órdenes fueron afectadas
 
     // Procesar cada canción en el callback
-for (let i = 0; i < songsData.length; i++) {
-  try {
-    const songData = songsData[i];
-    const { id: sunoSongId, audio_url, image_url, title } = songData;
-    const variationNumber = i + 1;
+    for (let i = 0; i < songsData.length; i++) {
+      try {
+        const songData = songsData[i];
+        const { id: sunoSongId, audio_url, image_url, title, duration, tags } = songData;
+        const variationNumber = i + 1; // V1, V2, V3...
 
-    console.log(`🎵 [Webhook] Procesando variación ${variationNumber}/${songsData.length}`);
+        console.log(`🎵 Procesando canción ${variationNumber}/${songsData.length} de Suno: ${sunoSongId}`);
 
-    // Validar audio_url
-    if (!audio_url || audio_url.trim() === '') {
-      console.warn(`⚠️ [Webhook] Variación ${variationNumber} sin audio_url - omitiendo`);
-      continue; // ✅ Saltar si no tiene audio
-    }
+        // Si es la primera variación (i=0), actualizar la canción existente
+        // Si es una variación adicional (i>0), crear una nueva Song
+        let song;
+        if (i > 0) {
+          console.log(`🎵 Creando variación ${variationNumber} de la canción`);
 
-    let song;
+          // Verificar que haya audio_url
+          if (!audio_url || audio_url.trim() === '') {
+            console.warn(`⚠️ Variación ${variationNumber} sin audio_url - omitiendo`);
+            continue;
+          }
 
-    if (i === 0) {
-      // Primera variación: actualizar Song existente
-      console.log(`🔄 [Webhook] Actualizando canción base (V1) - ID: ${baseSong.id}`);
-      
-      await storage.updateSongStatus(baseSong.id, 'completed', audio_url);
-      
-      if (image_url && image_url.trim()) {
-        await storage.updateSongImage(baseSong.id, image_url);
+          // Crear nueva canción como variación
+          song = await storage.createSong(baseSong.orderItemId, {
+            title: `${baseSong.title.replace(/\s*\(V\d+\)/, '')} (V${variationNumber})`,
+            lyrics: baseSong.lyrics,
+            audioUrl: audio_url,
+            imageUrl: image_url,
+            sunoSongId: sunoSongId, // Guardar el ID específico de esta variación
+            genre: baseSong.genre,
+            language: baseSong.language || 'es', // 🌐 Copiar el idioma de la canción base
+            variation: variationNumber
+          });
+
+          // Actualizar estado a completado
+          await storage.updateSongStatus(song.id, 'completed', audio_url);
+          variationsCreated++;
+          console.log(`✅ Variación ${variationNumber} creada: ID ${song.id}`);
+        } else {
+          // Primera variación: actualizar la canción existente
+          console.log(`🔄 Actualizando canción original (V1)`);
+
+          // Actualizar URLs en order_items para la primera variación
+          console.log(`🔄 Actualizando previewUrl y finalUrl en order_item ${baseSong.orderItemId}`);
+          await storage.updateOrderItemUrls(baseSong.orderItemId, {
+            previewUrl: image_url || null,
+            finalUrl: audio_url || null
+          });
+          console.log(`✅ URLs actualizados en order_item ${baseSong.orderItemId}`);
+
+          // Verificar que haya audio_url
+          if (!audio_url || audio_url.trim() === '') {
+            console.warn(`⚠️ Canción ${sunoSongId} sin audio_url - omitiendo actualización`);
+            continue;
+          }
+
+          // Actualizar título con V1
+          if (!baseSong.title.includes('(V1)')) {
+            await storage.updateSongTitle(baseSong.id, `${baseSong.title} (V1)`);
+          }
+
+          // Actualizar la canción con la URL del audio
+          await storage.updateSongStatus(baseSong.id, 'completed', audio_url);
+
+          // Actualizar también la imagen si viene
+          if (image_url && baseSong.imageUrl !== image_url) {
+            await storage.updateSongImage(baseSong.id, image_url);
+          }
+
+          // Actualizar el sunoSongId específico
+          if (baseSong.sunoSongId !== sunoSongId) {
+            await storage.updateSongSunoId(baseSong.id, sunoSongId);
+          }
+
+          console.log(`✅ Canción V1 actualizada: ID ${baseSong.id}`);
+          song = baseSong;
+        }
+
+        processedCount++;
+
+        // Rastrear la orden afectada para notificar al final
+        affectedOrders.add(baseSong.orderItemId ?
+          (await storage.getOrderItemById(baseSong.orderItemId))?.orderId : null);
+
+      } catch (error) {
+        console.error('❌ Error procesando canción del webhook:', error);
+        console.error('Stack:', error.stack);
+        // Continuar con las demás canciones
       }
-      
-      if (!baseSong.title.includes('(V1)')) {
-        await storage.updateSongTitle(baseSong.id, `${baseSong.title} (V1)`);
-      }
-      
-      song = baseSong;
-      processedCount++;
-      
-    } else {
-      // Variaciones adicionales: crear nuevo Song
-      console.log(`✨ [Webhook] Creando variación ${variationNumber} para OrderItem ${baseSong.orderItemId}`);
-      
-      song = await storage.createSong(baseSong.orderItemId, {
-        title: `${baseSong.title.replace(/\s*\(V\d+\)/, '')} (V${variationNumber})`,
-        lyrics: baseSong.lyrics,
-        audioUrl: audio_url,
-        imageUrl: image_url,
-        sunoSongId: sunoSongId,
-        genre: baseSong.genre,
-        language: baseSong.language || 'es',
-        variation: variationNumber
-      });
-      
-      variationsCreated++;
-      processedCount++;
-      
-      console.log(`✅ [Webhook] Variación ${variationNumber} creada - ID: ${song.id}`);
     }
-
-    // ✅ IMPORTANTE: Rastrear la orden
-    affectedOrders.add(baseSong.orderItemId ?
-      (await storage.getOrderItemById(baseSong.orderItemId))?.orderId : null);
-
-  } catch (error) {
-    console.error(`❌ [Webhook] Error procesando variación ${i + 1}:`, error);
-  }
-}
-
-console.log(`📊 [Webhook] Resumen: ${processedCount} procesadas, ${variationsCreated} variaciones creadas`);
 
     // Notificar las órdenes afectadas SOLO UNA VEZ al final
     console.log(`📧 Verificando ${affectedOrders.size} orden(es) afectada(s)...`);

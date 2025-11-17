@@ -202,9 +202,7 @@ export class DatabaseStorage {
     return Order.findAll({
       where: { userId },
       order: [["createdAt", "DESC"]],
-      include: [{ model: OrderItem, as: "items", order: [["createdAt", "ASC"]]}],
-      distinct: true,
-      subQuery: false,
+      include: [{ model: OrderItem, as: "items" }],
     });
   }
 
@@ -410,49 +408,34 @@ export class DatabaseStorage {
     }
   }
 
-async getOrderSongs(orderId) {
-  try {
-    console.log(`🔍 [getOrderSongs] Buscando canciones para orden ${orderId}`);
+  async getOrderSongs(orderId) {
+    try {
+      console.log(`🔍 [getOrderSongs] Buscando canciones para orden ${orderId}`);
 
-    // Opción 1: Obtener primero los OrderItems de la orden
-    const orderItems = await OrderItem.findAll({
-      where: { orderId },
-      attributes: ['id']
-    });
+      // Obtener todas las canciones de una orden específica
+      const songs = await Song.findAll({
+        include: [
+          {
+            model: OrderItem,
+            where: { orderId },
+            required: true
+          }
+        ],
+        order: [['variation', 'ASC'], ['createdAt', 'ASC']]
+      });
 
-    const orderItemIds = orderItems.map(item => item.id);
+      console.log(`📊 [getOrderSongs] Encontradas ${songs.length} canción(es) para orden ${orderId}`);
+      songs.forEach((song, i) => {
+        console.log(`   ${i + 1}. ID: ${song.id}, Title: ${song.title}, Variation: ${song.variation || 1}, Language: ${song.language || 'N/A'}, OrderItemId: ${song.orderItemId}`);
+      });
 
-    console.log(`📦 [getOrderSongs] OrderItems encontrados: ${orderItemIds.length}`);
-    console.log(`   IDs: ${orderItemIds.join(', ')}`);
-
-    if (orderItemIds.length === 0) {
-      console.warn(`⚠️ [getOrderSongs] Orden ${orderId} sin items`);
-      return [];
+      return songs;
+    } catch (error) {
+      console.error("❌ Error obteniendo canciones de la orden:", error);
+      console.error("Stack:", error.stack);
+      throw error;
     }
-
-    // Luego obtener todas las canciones de esos OrderItems
-    const songs = await Song.findAll({
-      where: {
-        orderItemId: orderItemIds  // ✅ Búsqueda directa por orderItemId
-      },
-      order: [
-        ['orderItemId', 'ASC'],     // Agrupar por OrderItem
-        ['variation', 'ASC'],        // Ordenar variaciones
-        ['createdAt', 'ASC']
-      ]
-    });
-
-    console.log(`🎵 [getOrderSongs] Total canciones encontradas: ${songs.length}`);
-    songs.forEach((song, i) => {
-      console.log(`   ${i + 1}. ID: ${song.id}, OrderItemId: ${song.orderItemId}, Title: ${song.title}, Variation: ${song.variation || 1}, Status: ${song.status}`);
-    });
-
-    return songs;
-  } catch (error) {
-    console.error("❌ Error obteniendo canciones de la orden:", error);
-    throw error;
   }
-}
 
   async getSongBySunoId(sunoSongId) {
     try {
