@@ -11,7 +11,7 @@ export const Song = sequelize.define('Song', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'orders',
+      model: 'order_items',
       key: 'id'
     }
   },
