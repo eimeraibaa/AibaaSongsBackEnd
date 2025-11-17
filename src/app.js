@@ -31,13 +31,21 @@ app.use((req, res, next) => {
   next()
 })
 
-// IMPORTANTE: Webhook de Stripe DEBE recibir raw bytes ANTES de cualquier JSON parser
-// Por eso aplicamos las rutas de webhook ANTES del express.json()
+// IMPORTANTE: Los webhooks necesitan diferentes parsers:
+// - Stripe: raw bytes (Buffer) para verificar firma
+// - Suno: JSON parseado
+// Por eso aplicamos parsers específicos ANTES de las rutas
 
-// Middleware raw para la ruta específica de Stripe
+// Middleware raw SOLO para /webhook/stripe
 app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
 
-// Aplicar SOLO las rutas de webhook ANTES del JSON parser
+// Middleware JSON SOLO para /webhook/suno y otros webhooks
+app.use('/webhook/suno', express.json());
+app.use('/webhook/update-order-email', express.json());
+app.use('/webhook/test-email', express.json());
+app.use('/webhook/suno-config', express.json());
+
+// Aplicar las rutas de webhook (ya tienen sus parsers configurados)
 app.use('/webhook', webhookRoutes);
 
 // AHORA SÍ aplicar JSON parser para el resto de las rutas
