@@ -208,6 +208,8 @@ export const checkoutCart = async (req, res) => {
     const { locale } = req.body; // Recibir idioma del frontend
     const stripeLocale = locale || 'auto'; // Usar 'auto' si no se proporciona
 
+    console.log('🔵 [BACKEND] locale : ' , stripeLocale);
+
     // 🚫 Headers anti-caché para prevenir que el navegador use respuestas viejas
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, private',
