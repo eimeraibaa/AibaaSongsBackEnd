@@ -246,7 +246,6 @@ export const checkoutCart = async (req, res) => {
           product_data: {
             name: STRIPE_CONFIG.products.CUSTOM_SONG.name,
             description: `${songDescription} (${genres})`,
-            locale: stripeLocale,
             metadata: {
               cartItemId: item.id.toString(),
               genres: genres,
@@ -255,6 +254,7 @@ export const checkoutCart = async (req, res) => {
             }
           }
         },
+        locale: stripeLocale,
         quantity: 1
       };
     });
