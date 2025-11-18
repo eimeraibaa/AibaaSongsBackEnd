@@ -256,7 +256,6 @@ export const checkoutCart = async (req, res) => {
             }
           }
         },
-        locale: stripeLocale,
         quantity: 1
       };
     });
