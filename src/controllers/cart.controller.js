@@ -205,6 +205,8 @@ export const removeFromCart = async (req, res) => {
 export const checkoutCart = async (req, res) => {
   try {
     console.log('🔵 [BACKEND] POST /cart/checkout llamado para userId:', req.user.id);
+    const { locale } = req.body; // Recibir idioma del frontend
+    const stripeLocale = locale || 'auto'; // Usar 'auto' si no se proporciona
 
     // 🚫 Headers anti-caché para prevenir que el navegador use respuestas viejas
     res.set({
@@ -244,6 +246,7 @@ export const checkoutCart = async (req, res) => {
           product_data: {
             name: STRIPE_CONFIG.products.CUSTOM_SONG.name,
             description: `${songDescription} (${genres})`,
+            locale: stripeLocale,
             metadata: {
               cartItemId: item.id.toString(),
               genres: genres,
@@ -279,6 +282,7 @@ export const checkoutCart = async (req, res) => {
       success_url: STRIPE_CONFIG.checkout.successUrl,
       cancel_url: STRIPE_CONFIG.checkout.cancelUrl,
       metadata,
+      locale: stripeLocale,
       allow_promotion_codes: STRIPE_CONFIG.checkout.allowPromotionCodes,
       // Configuración de expiración (24 horas)
       expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
