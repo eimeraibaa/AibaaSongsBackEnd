@@ -142,22 +142,44 @@ class EmailService {
   }
 
   /**
-   * Genera el HTML de una canción individual optimizado para iOS
+   * Agrupa canciones por orderItemId para mostrar variaciones juntas
    */
-  generateSongHTML(song, texts, magicToken) {
+  groupSongsByOrderItem(songs) {
+    const songsByOrderItem = songs.reduce((acc, song) => {
+      const key = song.orderItemId || 'unknown';
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(song);
+      return acc;
+    }, {});
+
+    // Ordenar cada grupo por variación (V1, V2, V3...)
+    Object.keys(songsByOrderItem).forEach(key => {
+      songsByOrderItem[key].sort((a, b) => (a.variation || 1) - (b.variation || 1));
+    });
+
+    return Object.values(songsByOrderItem);
+  }
+
+  /**
+   * Genera el HTML de un grupo de canciones (canción base + variaciones) optimizado para iOS
+   */
+  generateSongGroupHTML(songGroup, texts, magicToken) {
+    const baseSong = songGroup[0];
+    const baseTitle = baseSong.title?.replace(/\s*\(V\d+\)/, '') || texts.untitled;
+
     const genreText = texts.language === 'en'
-      ? this.translateGenreToEnglish(song.genre || '')
-      : (song.genre || '');
+      ? this.translateGenreToEnglish(baseSong.genre || '')
+      : (baseSong.genre || '');
 
-    const variationText = song.variation && texts.variationLabels[song.variation]
-      ? ` • ✨ ${texts.variationLabels[song.variation]}`
-      : '';
+    // Si solo hay una canción en el grupo, mostrarla simple
+    if (songGroup.length === 1) {
+      const song = songGroup[0];
+      const listenUrl = `${FRONTEND_URL}/history?token=${magicToken}&play=${song.id}`;
+      const downloadUrl = `${FRONTEND_URL}/history?token=${magicToken}&download=${song.id}`;
 
-    // URLs con magic token y parámetros para auto-play/download
-    const listenUrl = `${FRONTEND_URL}/history?token=${magicToken}&play=${song.id}`;
-    const downloadUrl = `${FRONTEND_URL}/history?token=${magicToken}&download=${song.id}`;
-
-    return `
+      return `
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; padding: 20px; margin: 0 0 20px 0; border: 1px solid #f0f0f0;">
         <tr>
           <td>
@@ -166,10 +188,10 @@ class EmailService {
               ${song.title || texts.untitled}
             </p>
 
-            <!-- Género + Variación -->
+            <!-- Género -->
             ${genreText ? `
               <p style="margin: 0 0 15px 0; font-size: 13px; color: #666; font-style: italic;">
-                🎸 ${genreText}${variationText}
+                🎸 ${genreText}
               </p>
             ` : ''}
 
@@ -222,6 +244,92 @@ class EmailService {
           </td>
         </tr>
       </table>
+      `;
+    }
+
+    // Si hay múltiples variaciones, mostrarlas todas
+    const variationsHTML = songGroup.map(song => {
+      const listenUrl = `${FRONTEND_URL}/history?token=${magicToken}&play=${song.id}`;
+      const downloadUrl = `${FRONTEND_URL}/history?token=${magicToken}&download=${song.id}`;
+      const variationLabel = song.variation ? `V${song.variation}` : '';
+
+      return `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #e0e0e0;">
+          <tr>
+            <td>
+              <p style="margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #555;">
+                ${variationLabel ? `${variationLabel}: ` : ''}${song.title}
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding-right: 10px;">
+                    <a href="${listenUrl}"
+                       target="_blank"
+                       style="display: inline-block !important;
+                              color: #ffffff !important;
+                              text-decoration: none !important;
+                              font-size: 13px;
+                              font-weight: 600;
+                              padding: 8px 16px;
+                              border-radius: 4px;
+                              background-color: #e69216;
+                              border: none;
+                              mso-padding-alt: 0;
+                              -webkit-text-size-adjust: none;">
+                      🎵 ${texts.listenLink}
+                    </a>
+                  </td>
+                  <td>
+                    <a href="${downloadUrl}"
+                       target="_blank"
+                       style="display: inline-block !important;
+                              color: #ffffff !important;
+                              text-decoration: none !important;
+                              font-size: 13px;
+                              font-weight: 600;
+                              padding: 8px 16px;
+                              border-radius: 4px;
+                              background-color: #4CAF50;
+                              border: none;
+                              mso-padding-alt: 0;
+                              -webkit-text-size-adjust: none;">
+                      📥 ${texts.downloadLink}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      `;
+    }).join('');
+
+    return `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fafafa; border-radius: 8px; padding: 20px; margin: 0 0 25px 0; border: 1px solid #e0e0e0;">
+        <tr>
+          <td>
+            <!-- Título base -->
+            <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #333;">
+              ${baseTitle}
+            </p>
+
+            <!-- Género -->
+            ${genreText ? `
+              <p style="margin: 0 0 12px 0; font-size: 13px; color: #666; font-style: italic;">
+                🎸 ${genreText}
+              </p>
+            ` : ''}
+
+            <!-- Label de variaciones -->
+            <p style="margin: 0 0 12px 0; font-size: 13px; color: #888;">
+              🎵 ${songGroup.length} ${texts.variationsLabel}:
+            </p>
+
+            <!-- Lista de variaciones -->
+            ${variationsHTML}
+          </td>
+        </tr>
+      </table>
     `;
   }
 
@@ -244,6 +352,7 @@ class EmailService {
         orderLabel: 'Your order',
         greeting: 'Hello Songmaker! 👋',
         mainSongTitle: 'Your Personalized Song',
+        mainSongsTitle: 'Your Personalized Songs',
         giftTitle: '🎁 Special gift just for you',
         giftText: 'We wanted to thank you in a unique way.',
         giftText2: 'Enjoy an alternative version of your song, created especially for you.',
@@ -254,6 +363,7 @@ class EmailService {
           extended: 'Extended Version',
           remix: 'Remix'
         },
+        variationsLabel: 'variations available',
         listenLink: 'Listen',
         downloadLink: 'Download',
         viewAllButton: '🎵 View all my songs',
@@ -282,6 +392,7 @@ class EmailService {
         orderLabel: 'Tu orden',
         greeting: '¡Hola Songmaker! 👋',
         mainSongTitle: 'Tu Canción Personalizada',
+        mainSongsTitle: 'Tus Canciones Personalizadas',
         giftTitle: '🎁 Regalo especial solo para ti',
         giftText: 'Queríamos agradecerte de una forma única.',
         giftText2: 'Disfruta una versión alternativa de tu canción, creada especialmente para ti.',
@@ -292,6 +403,7 @@ class EmailService {
           extended: 'Versión Extendida',
           remix: 'Remix'
         },
+        variationsLabel: 'variaciones disponibles',
         listenLink: 'Escuchar',
         downloadLink: 'Descargar',
         viewAllButton: '🎵 Ver todas mis canciones',
@@ -315,15 +427,24 @@ class EmailService {
       })
     };
 
-    // Generar HTML para canción principal (solo la primera)
-    const mainSongHTML = mainSongs.length > 0
-      ? this.generateSongHTML(mainSongs[0], texts, magicToken)
-      : '';
+    // Agrupar canciones principales por orderItemId
+    const mainSongGroups = this.groupSongsByOrderItem(mainSongs);
 
-    // Generar HTML para regalo (si existe)
-    const giftSongHTML = giftSongs.length > 0
-      ? this.generateSongHTML(giftSongs[0], texts, magicToken)
-      : '';
+    // Generar HTML para todas las canciones principales
+    const mainSongsHTML = mainSongGroups.map(songGroup =>
+      this.generateSongGroupHTML(songGroup, texts, magicToken)
+    ).join('');
+
+    // Agrupar canciones de regalo por orderItemId
+    const giftSongGroups = this.groupSongsByOrderItem(giftSongs);
+
+    // Generar HTML para todas las canciones de regalo
+    const giftSongsHTML = giftSongGroups.map(songGroup =>
+      this.generateSongGroupHTML(songGroup, texts, magicToken)
+    ).join('');
+
+    // Título dinámico según cantidad de canciones
+    const mainSongsTitle = mainSongGroups.length > 1 ? texts.mainSongsTitle : texts.mainSongTitle;
 
     // URL para ver todas las canciones
     const viewAllUrl = `${FRONTEND_URL}/history?token=${magicToken}`;
@@ -419,15 +540,17 @@ class EmailService {
                 ${texts.greeting}
               </p>
 
-              <!-- Tu Canción Personalizada -->
+              <!-- Tus Canciones Personalizadas -->
+              ${mainSongsHTML ? `
               <div style="margin-bottom: 35px;">
                 <h2 style="margin: 0 0 20px 0; font-size: 22px; color: #e69216; font-weight: 700; border-bottom: 3px solid #e69216; padding-bottom: 10px;">
-                  ${texts.mainSongTitle}
+                  ${mainSongsTitle}
                 </h2>
-                ${mainSongHTML}
+                ${mainSongsHTML}
               </div>
+              ` : ''}
 
-              ${giftSongs.length > 0 ? `
+              ${giftSongGroups.length > 0 ? `
               <!-- Regalo Especial -->
               <div style="margin-bottom: 35px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding: 25px; border-radius: 12px; border: 2px dashed #e69216;">
                 <h2 style="margin: 0 0 10px 0; font-size: 22px; color: #d67d0a; font-weight: 700;">
@@ -439,7 +562,7 @@ class EmailService {
                 <p style="margin: 0 0 20px 0; font-size: 15px; color: #666; line-height: 1.6;">
                   ${texts.giftText2}
                 </p>
-                ${giftSongHTML}
+                ${giftSongsHTML}
               </div>
               ` : ''}
 
