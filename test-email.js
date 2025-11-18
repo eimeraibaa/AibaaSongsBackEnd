@@ -43,27 +43,73 @@ async function testEmailService() {
 
   console.log('✅ EmailService configurado correctamente\n');
 
-  // Datos de prueba
+  // Datos de prueba con múltiples variaciones
   const testEmail = process.argv[2] || 'test@example.com';
   const testOrderId = 12345;
   const testUserId = 'test-user-123';
   const testSongs = [
+    // Canción 1 con 3 variaciones
     {
       id: 1,
-      title: 'Canción de Prueba en Español',
+      title: 'Canción de Prueba en Español (V1)',
       genre: 'pop',
       language: 'es',
       isGift: false,
-      audioUrl: 'https://example.com/song1.mp3'
+      orderItemId: 101,
+      variation: 1,
+      audioUrl: 'https://example.com/song1-v1.mp3'
     },
     {
       id: 2,
-      title: 'Gift Song in English',
+      title: 'Canción de Prueba en Español (V2)',
+      genre: 'pop',
+      language: 'es',
+      isGift: false,
+      orderItemId: 101,
+      variation: 2,
+      audioUrl: 'https://example.com/song1-v2.mp3'
+    },
+    {
+      id: 3,
+      title: 'Canción de Prueba en Español (V3)',
+      genre: 'pop',
+      language: 'es',
+      isGift: false,
+      orderItemId: 101,
+      variation: 3,
+      audioUrl: 'https://example.com/song1-v3.mp3'
+    },
+    // Canción 2 con 2 variaciones
+    {
+      id: 4,
+      title: 'Test Song in English (V1)',
       genre: 'rock',
       language: 'en',
+      isGift: false,
+      orderItemId: 102,
+      variation: 1,
+      audioUrl: 'https://example.com/song2-v1.mp3'
+    },
+    {
+      id: 5,
+      title: 'Test Song in English (V2)',
+      genre: 'rock',
+      language: 'en',
+      isGift: false,
+      orderItemId: 102,
+      variation: 2,
+      audioUrl: 'https://example.com/song2-v2.mp3'
+    },
+    // Regalo con 1 variación
+    {
+      id: 6,
+      title: 'Regalo Especial (V1)',
+      genre: 'acoustic',
+      language: 'es',
       isGift: true,
-      variation: 'acoustic',
-      audioUrl: 'https://example.com/song2.mp3'
+      orderItemId: 103,
+      variation: 1,
+      audioUrl: 'https://example.com/gift1.mp3'
     }
   ];
 

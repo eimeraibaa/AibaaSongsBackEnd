@@ -745,16 +745,34 @@ class EmailService {
       console.log(`   Token: ${magicToken.substring(0, 10)}...`);
       console.log(`   Expira: ${expiresAt}`);
 
-      // 2. Enriquecer datos con información de idioma
-      const enrichedSongs = this.enrichSongsWithLanguage(songs);
+      // 2. Convertir objetos Sequelize a objetos planos
+      const plainSongs = songs.map(song => {
+        // Si es un objeto Sequelize, usar .get() para obtener valores planos
+        const plainSong = song.get ? song.get({ plain: true }) : song;
+
+        console.log(`🔍 DEBUG Canción:`, {
+          id: plainSong.id,
+          title: plainSong.title,
+          orderItemId: plainSong.orderItemId,
+          genre: plainSong.genre,
+          language: plainSong.language,
+          variation: plainSong.variation,
+          audioUrl: plainSong.audioUrl ? 'Presente' : 'Ausente'
+        });
+
+        return plainSong;
+      });
+
+      // 3. Enriquecer datos con información de idioma
+      const enrichedSongs = this.enrichSongsWithLanguage(plainSongs);
 
       console.log(`📊 Email para: ${userEmail}`);
       console.log(`📊 Total canciones: ${enrichedSongs.length}`);
       enrichedSongs.forEach((song, i) => {
-        console.log(`   ${i + 1}. ${song.title} - Idioma: ${song.language} - Género: ${song.genre || 'N/A'} - Regalo: ${song.isGift ? 'Sí' : 'No'}`);
+        console.log(`   ${i + 1}. ${song.title} - OrderItemId: ${song.orderItemId} - Idioma: ${song.language} - Género: ${song.genre || 'N/A'} - Variación: ${song.variation || 1} - Regalo: ${song.isGift ? 'Sí' : 'No'}`);
       });
 
-      // 3. Detectar idioma del email
+      // 4. Detectar idioma del email
       const languageCounts = enrichedSongs.reduce((acc, song) => {
         const lang = song.language || 'es';
         acc[lang] = (acc[lang] || 0) + 1;
@@ -766,7 +784,7 @@ class EmailService {
       console.log(`🌍 Idioma detectado: ${detectedLanguage}`);
       console.log(`📈 Conteos: EN=${languageCounts.en || 0}, ES=${languageCounts.es || 0}`);
 
-      // 4. Generar template optimizado
+      // 5. Generar template optimizado
       const htmlContent = this.generateEmailTemplate(orderId, enrichedSongs, detectedLanguage, magicToken);
 
       // Subject según idioma
@@ -774,7 +792,7 @@ class EmailService {
         ? '🎵 Your personalized song is ready!'
         : '🎵 ¡Tu canción personalizada está lista!';
 
-      // 5. Enviar email
+      // 6. Enviar email
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
