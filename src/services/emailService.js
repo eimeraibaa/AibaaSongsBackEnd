@@ -154,8 +154,8 @@ class EmailService {
       : '';
 
     // URLs con magic token y parámetros para auto-play/download
-    const listenUrl = `${FRONTEND_URL}/my-songs?token=${magicToken}&play=${song.id}`;
-    const downloadUrl = `${FRONTEND_URL}/my-songs?token=${magicToken}&download=${song.id}`;
+    const listenUrl = `${FRONTEND_URL}/history?token=${magicToken}&play=${song.id}`;
+    const downloadUrl = `${FRONTEND_URL}/history?token=${magicToken}&download=${song.id}`;
 
     return `
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; padding: 20px; margin: 0 0 20px 0; border: 1px solid #f0f0f0;">
@@ -326,7 +326,7 @@ class EmailService {
       : '';
 
     // URL para ver todas las canciones
-    const viewAllUrl = `${FRONTEND_URL}/my-songs?token=${magicToken}`;
+    const viewAllUrl = `${FRONTEND_URL}/history?token=${magicToken}`;
     const surveyUrl = `${FRONTEND_URL}/survey/${orderId}?token=${magicToken}`;
 
     // Template completo optimizado para iOS
