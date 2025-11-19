@@ -2,6 +2,7 @@
 import jwt from 'jsonwebtoken';
 import { storage } from '../services/storage.js';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { resendEmailService as emailService } from '../services/resendEmailService.js';
 
 export const loginUser = async (req, res, next) => {
@@ -191,6 +192,150 @@ export const updateProfile = async (req, res) => {
     console.error('Error al actualizar perfil:', error);
     return res.status(500).json({
       error: 'Error al actualizar el perfil'
+    });
+  }
+};
+
+/**
+ * Solicita restablecimiento de contraseña
+ * Genera un token y envía email al usuario
+ */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email, language } = req.body;
+
+    // Validar que se proporcionó el email
+    if (!email) {
+      return res.status(400).json({
+        error: 'El email es requerido'
+      });
+    }
+
+    // Buscar usuario por email
+    const user = await storage.getUserByEmail(email);
+
+    // Por seguridad, siempre responder con éxito aunque el usuario no exista
+    // Esto previene que se pueda averiguar qué emails están registrados
+    if (!user) {
+      console.log(`⚠️ Intento de reset para email no registrado: ${email}`);
+      return res.status(200).json({
+        message: 'Si el email existe, recibirás instrucciones para restablecer tu contraseña'
+      });
+    }
+
+    // Verificar que el usuario tiene contraseña local (no solo OAuth)
+    if (!user.password && user.authProvider !== 'local') {
+      console.log(`⚠️ Usuario ${email} usa OAuth, no puede resetear contraseña local`);
+      return res.status(200).json({
+        message: 'Si el email existe, recibirás instrucciones para restablecer tu contraseña'
+      });
+    }
+
+    // Generar token de restablecimiento
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    // Guardar token en la base de datos
+    await storage.updateUser(user.id, {
+      resetToken,
+      resetTokenExpires
+    });
+
+    // Enviar email con el token
+    try {
+      const userLanguage = language || 'es';
+      const emailResult = await emailService.sendPasswordResetEmail(
+        user.email,
+        user.firstName,
+        resetToken,
+        userLanguage
+      );
+
+      if (emailResult.success) {
+        console.log(`✅ Email de restablecimiento enviado a: ${email}`);
+      } else {
+        console.error('⚠️ No se pudo enviar email de restablecimiento:', emailResult.error);
+        // No fallar el endpoint si el email falla
+      }
+    } catch (emailError) {
+      console.error('❌ Error al enviar email de restablecimiento:', emailError);
+      // No fallar el endpoint si el email falla
+    }
+
+    return res.status(200).json({
+      message: 'Si el email existe, recibirás instrucciones para restablecer tu contraseña'
+    });
+
+  } catch (error) {
+    console.error('Error en forgotPassword:', error);
+    return res.status(500).json({
+      error: 'Error al procesar la solicitud'
+    });
+  }
+};
+
+/**
+ * Restablece la contraseña usando el token
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Validar campos requeridos
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        error: 'Token y nueva contraseña son requeridos'
+      });
+    }
+
+    // Validar longitud mínima de contraseña
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        error: 'La contraseña debe tener al menos 8 caracteres'
+      });
+    }
+
+    // Buscar usuario con el token
+    const { User } = await import('../models/users.js');
+    const user = await User.findOne({
+      where: {
+        resetToken: token
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        error: 'Token inválido o expirado'
+      });
+    }
+
+    // Verificar que el token no haya expirado
+    if (user.resetTokenExpires < new Date()) {
+      return res.status(400).json({
+        error: 'El token ha expirado. Por favor solicita un nuevo restablecimiento'
+      });
+    }
+
+    // Hashear la nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Actualizar contraseña y limpiar tokens
+    await storage.updateUser(user.id, {
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpires: null
+    });
+
+    console.log(`✅ Contraseña restablecida exitosamente para usuario: ${user.email}`);
+
+    return res.status(200).json({
+      message: 'Contraseña restablecida exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error en resetPassword:', error);
+    return res.status(500).json({
+      error: 'Error al restablecer la contraseña'
     });
   }
 };

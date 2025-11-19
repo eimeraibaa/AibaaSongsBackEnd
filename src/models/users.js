@@ -14,11 +14,13 @@ export const User = sequelize.define('users', {
     allowNull: false,
     defaultValue: 'local' // 'local', 'google', 'facebook'
   },
-  profilePicture: { type: DataTypes.STRING, allowNull: true }
+  profilePicture: { type: DataTypes.STRING, allowNull: true },
+  resetToken: { type: DataTypes.STRING, allowNull: true },
+  resetTokenExpires: { type: DataTypes.DATE, allowNull: true }
 })
 
 User.prototype.toSafeObject = function() {
-  const { password, ...safeUser } = this.toJSON();
+  const { password, resetToken, resetTokenExpires, ...safeUser } = this.toJSON();
   return safeUser;
 };
 

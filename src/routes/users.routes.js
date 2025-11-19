@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import {Router} from 'express'
-import {loginUser,registerUser , getAuthenticatedUser , updateProfile} from '../controllers/users.controller.js'
+import {loginUser,registerUser , getAuthenticatedUser , updateProfile, forgotPassword, resetPassword} from '../controllers/users.controller.js'
 import { isAuthenticated } from '../middleware/auth.js';
 import passport from 'passport';
 
@@ -11,6 +11,10 @@ router.post('/login',loginUser)
 router.post('/register',registerUser)
 router.get('/auth', isAuthenticated, getAuthenticatedUser);
 router.patch('/profile', isAuthenticated, updateProfile);
+
+// Rutas de restablecimiento de contraseña
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 // Rutas de OAuth - Google
 router.get('/auth/google',

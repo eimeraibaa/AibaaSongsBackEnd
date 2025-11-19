@@ -981,6 +981,306 @@ ${texts.footerCopyright}
   }
 
   /**
+   * Envía email de restablecimiento de contraseña
+   * @param {string} userEmail - Email del usuario
+   * @param {string} userName - Nombre del usuario
+   * @param {string} resetToken - Token de restablecimiento
+   * @param {string} language - Idioma del email ('es' o 'en')
+   */
+  async sendPasswordResetEmail(userEmail, userName, resetToken, language = 'es') {
+    try {
+      if (!this.isConfigured()) {
+        console.warn('⚠️ Servicio de email no configurado. No se enviará el email.');
+        return { success: false, message: 'Email service not configured' };
+      }
+
+      if (!userEmail) {
+        console.warn('⚠️ No se proporcionó email de usuario');
+        return { success: false, message: 'No email provided' };
+      }
+
+      console.log(`📧 Enviando email de restablecimiento de contraseña a: ${userEmail} (idioma: ${language})`);
+
+      // URL de restablecimiento
+      const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+      // Textos según el idioma
+      const texts = language.includes('en') ? {
+        title: '🔐 Password Reset',
+        subtitle: 'We received a request to reset your password',
+        greeting: 'Hello',
+        intro: 'We received a request to reset the password for your Make Ur Songs account.',
+        instructionsTitle: 'How to reset your password:',
+        step1: 'Click the button below to reset your password',
+        step2: 'You will be redirected to a secure page',
+        step3: 'Enter your new password',
+        resetButton: '🔓 Reset Password',
+        expiryWarning: '⚠️ This link will expire in 1 hour',
+        notRequested: 'If you did not request this password reset, please ignore this email. Your password will remain unchanged.',
+        securityNote: 'For security reasons, never share this link with anyone.',
+        contactSupport: 'If you need assistance, feel free to contact our support team.',
+        conctactEmail: 'support@makeursong.com',
+        footerText: 'This is an automated email, please do not reply to this message.',
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creating personalized music`
+      } : {
+        title: '🔐 Restablecer Contraseña',
+        subtitle: 'Recibimos una solicitud para restablecer tu contraseña',
+        greeting: '¡Hola',
+        intro: 'Recibimos una solicitud para restablecer la contraseña de tu cuenta de Make Ur Songs.',
+        instructionsTitle: 'Cómo restablecer tu contraseña:',
+        step1: 'Haz clic en el botón de abajo para restablecer tu contraseña',
+        step2: 'Serás redirigido a una página segura',
+        step3: 'Ingresa tu nueva contraseña',
+        resetButton: '🔓 Restablecer Contraseña',
+        expiryWarning: '⚠️ Este enlace expirará en 1 hora',
+        notRequested: 'Si no solicitaste restablecer tu contraseña, ignora este correo. Tu contraseña permanecerá sin cambios.',
+        securityNote: 'Por seguridad, nunca compartas este enlace con nadie.',
+        contactSupport: 'Si necesitas ayuda, no dudes en contactar a nuestro equipo de soporte.',
+        conctactEmail: 'support@makeursong.com',
+        footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
+        footerCopyright: `© ${new Date().getFullYear()} Make Ur Songs - Creando música personalizada`
+      };
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              margin: 0;
+              padding: 0;
+              background-color: #f5f5f5;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: #ffffff;
+            }
+            .header {
+              background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%);
+              color: white;
+              padding: 40px 30px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0 0 10px 0;
+              font-size: 28px;
+              font-weight: 600;
+            }
+            .header p {
+              margin: 0;
+              font-size: 16px;
+              opacity: 0.95;
+            }
+            .content {
+              padding: 40px 30px;
+            }
+            .instructions-box {
+              background: #f8f9fa;
+              border-left: 4px solid #e69216;
+              padding: 20px;
+              margin: 25px 0;
+              border-radius: 4px;
+            }
+            .instructions-box h3 {
+              margin: 0 0 15px 0;
+              color: #333;
+              font-size: 16px;
+              font-weight: 600;
+            }
+            .instructions-box ol {
+              margin: 0;
+              padding-left: 20px;
+            }
+            .instructions-box li {
+              margin-bottom: 8px;
+              color: #555;
+            }
+            .button-container {
+              text-align: center;
+              margin-top: 30px;
+            }
+            .button {
+              display: inline-block;
+              padding: 16px 40px;
+              background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%);
+              color: white !important;
+              text-decoration: none;
+              border-radius: 8px;
+              font-size: 16px;
+              font-weight: 600;
+              box-shadow: 0 4px 12px rgba(230, 146, 22, 0.3);
+            }
+            .button:hover {
+              background: linear-gradient(135deg, #d67d0a 0%, #c66d09 100%);
+            }
+            .warning {
+              background: #fff3cd;
+              border: 1px solid #ffc107;
+              padding: 15px;
+              margin: 30px 0;
+              border-radius: 6px;
+            }
+            .warning p {
+              margin: 0;
+              color: #856404;
+              font-size: 14px;
+            }
+            .security-info {
+              margin: 30px 0 0 0;
+              padding-top: 30px;
+              border-top: 1px solid #e0e0e0;
+            }
+            .security-info p {
+              margin: 0 0 15px 0;
+              color: #666;
+              font-size: 14px;
+            }
+            .footer {
+              text-align: center;
+              padding: 30px;
+              background-color: #fafafa;
+              color: #666;
+              font-size: 12px;
+              border-top: 1px solid #eeeeee;
+            }
+            .footer p {
+              margin: 5px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>${texts.title}</h1>
+              <p>${texts.subtitle}</p>
+            </div>
+            <div class="content">
+              <p style="font-size: 16px;">${texts.greeting}${userName ? ' ' + userName : ''},</p>
+              <p style="font-size: 15px; margin-top: 15px;">${texts.intro}</p>
+
+              <div class="instructions-box">
+                <h3>${texts.instructionsTitle}</h3>
+                <ol>
+                  <li>${texts.step1}</li>
+                  <li>${texts.step2}</li>
+                  <li>${texts.step3}</li>
+                </ol>
+              </div>
+
+              <div class="button-container">
+                <a href="${resetUrl}" class="button">${texts.resetButton}</a>
+              </div>
+
+              <div class="warning">
+                <p><strong>${texts.expiryWarning}</strong></p>
+              </div>
+
+              <div class="security-info">
+                <p>${texts.notRequested}</p>
+                <p><strong>${texts.securityNote}</strong></p>
+              </div>
+
+              <p style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+                ${texts.contactSupport}
+              </p>
+              <p style="margin-top: 10px; text-align: center; color: #666; font-size: 14px;">
+                <a href="mailto:${texts.conctactEmail}" style="color: #e69216; text-decoration: none;">${texts.conctactEmail}</a>
+              </p>
+            </div>
+            <div class="footer">
+              <p>${texts.footerText}</p>
+              <p>${texts.footerCopyright}</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const textContent = language.includes('en') ? `
+${texts.greeting}${userName ? ' ' + userName : ''},
+
+${texts.title}
+
+${texts.intro}
+
+${texts.instructionsTitle}
+1. ${texts.step1}
+2. ${texts.step2}
+3. ${texts.step3}
+
+Reset your password: ${resetUrl}
+
+${texts.expiryWarning}
+
+${texts.notRequested}
+${texts.securityNote}
+
+${texts.footerCopyright}
+      `.trim() : `
+${texts.greeting}${userName ? ' ' + userName : ''},
+
+${texts.title}
+
+${texts.intro}
+
+${texts.instructionsTitle}
+1. ${texts.step1}
+2. ${texts.step2}
+3. ${texts.step3}
+
+Restablecer contraseña: ${resetUrl}
+
+${texts.expiryWarning}
+
+${texts.notRequested}
+${texts.securityNote}
+
+${texts.footerCopyright}
+      `.trim();
+
+      const subject = language.includes('en')
+        ? '🔐 Reset Your Password - Make Ur Songs'
+        : '🔐 Restablecer tu Contraseña - Make Ur Songs';
+
+      const { data, error } = await this.resend.emails.send({
+        from: EMAIL_FROM,
+        to: userEmail,
+        subject,
+        html: htmlContent,
+        text: textContent,
+      });
+
+      if (error) {
+        console.error('❌ Error enviando email de restablecimiento con Resend:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      console.log('✅ Email de restablecimiento enviado exitosamente:', data.id);
+
+      return {
+        success: true,
+        messageId: data.id,
+      };
+
+    } catch (error) {
+      console.error('❌ Error enviando email de restablecimiento:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Verifica la configuración del servicio de email
    */
   async verifyConnection() {
