@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "migrate:sessions": "node scripts/migrate-sessions.js",
-    "migrate:password-reset": "node scripts/add-password-reset-fields.js"
+    "migrate:password-reset": "node scripts/add-password-reset-fields.js",
+    "migrate:railway": "node scripts/migrate-railway.js"
   },
   "keywords": [],
   "author": "",
