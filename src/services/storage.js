@@ -391,7 +391,7 @@ export class DatabaseStorage {
             include: [
               {
                 model: Order,
-                as: 'order',
+                 as: 'order',
                 where: { userId },
                 attributes: ['id', 'userId', 'totalAmount', 'status', 'createdAt']
               }
