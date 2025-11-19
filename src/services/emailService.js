@@ -1217,6 +1217,200 @@ class EmailService {
       return { success: false, error: error.message };
     }
   }
+
+  /**
+   * Envía email de restablecimiento de contraseña
+   *
+   * @param {string} userEmail - Email del usuario
+   * @param {string} userName - Nombre del usuario
+   * @param {string} resetToken - Token de restablecimiento
+   * @param {string} language - Idioma del email ('es' o 'en')
+   */
+  async sendPasswordResetEmail(userEmail, userName, resetToken, language = 'es') {
+    try {
+      if (!this.resend) {
+        console.error('❌ Resend no configurado');
+        return { success: false, error: 'Email service not configured' };
+      }
+
+      console.log(`📧 Enviando email de restablecimiento de contraseña a: ${userEmail} (idioma: ${language})`);
+
+      // URL de restablecimiento
+      const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+      // Textos según el idioma
+      const texts = language.includes('en') ? {
+        title: '🔐 Password Reset',
+        subtitle: 'We received a request to reset your password',
+        greeting: 'Hello',
+        intro: 'We received a request to reset the password for your Make Ur Song account.',
+        instructionsTitle: 'How to reset your password:',
+        step1: 'Click the button below to reset your password',
+        step2: 'You will be redirected to a secure page',
+        step3: 'Enter your new password',
+        resetButton: 'Reset Password',
+        expiryWarning: '⚠️ This link will expire in 1 hour',
+        notRequested: 'If you did not request this password reset, please ignore this email. Your password will remain unchanged.',
+        securityNote: 'For security reasons, never share this link with anyone.',
+        footerText: 'This is an automated email, please do not reply to this message.',
+        footerCopyright: '© 2025 Make Ur Song - Creating personalized music'
+      } : {
+        title: '🔐 Restablecer Contraseña',
+        subtitle: 'Recibimos una solicitud para restablecer tu contraseña',
+        greeting: '¡Hola',
+        intro: 'Recibimos una solicitud para restablecer la contraseña de tu cuenta de Make Ur Song.',
+        instructionsTitle: 'Cómo restablecer tu contraseña:',
+        step1: 'Haz clic en el botón de abajo para restablecer tu contraseña',
+        step2: 'Serás redirigido a una página segura',
+        step3: 'Ingresa tu nueva contraseña',
+        resetButton: 'Restablecer Contraseña',
+        expiryWarning: '⚠️ Este enlace expirará en 1 hora',
+        notRequested: 'Si no solicitaste restablecer tu contraseña, ignora este correo. Tu contraseña permanecerá sin cambios.',
+        securityNote: 'Por seguridad, nunca compartas este enlace con nadie.',
+        footerText: 'Este es un correo automático, por favor no respondas a este mensaje.',
+        footerCopyright: '© 2025 Make Ur Song - Creando música personalizada'
+      };
+
+      const subject = language.includes('en')
+        ? '🔐 Reset Your Password - Make Ur Song'
+        : '🔐 Restablecer tu Contraseña - Make Ur Song';
+
+      // Leer logo
+      let logoBase64 = '';
+      try {
+        const logoBuffer = fs.readFileSync(LOGO_PATH);
+        logoBase64 = logoBuffer.toString('base64');
+      } catch (err) {
+        console.warn('⚠️ No se pudo cargar el logo:', err.message);
+      }
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="${language}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${texts.title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
+    <tr>
+      <td align="center" style="padding: 30px 0;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+              ${logoBase64 ? `<img src="cid:logo" alt="Make Ur Song" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 50%; background: white; padding: 10px;">` : ''}
+              <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                ${texts.title}
+              </h1>
+              <p style="margin: 0; color: #ffffff; font-size: 16px; opacity: 0.95;">
+                ${texts.subtitle}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                ${texts.greeting} <strong>${userName}</strong>,
+              </p>
+
+              <p style="margin: 0 0 30px 0; color: #555555; font-size: 15px; line-height: 1.6;">
+                ${texts.intro}
+              </p>
+
+              <!-- Instructions -->
+              <div style="background-color: #f8f9fa; border-left: 4px solid #e69216; padding: 20px; margin: 0 0 30px 0; border-radius: 4px;">
+                <h3 style="margin: 0 0 15px 0; color: #333333; font-size: 16px; font-weight: 600;">
+                  ${texts.instructionsTitle}
+                </h3>
+                <ol style="margin: 0; padding-left: 20px; color: #555555; font-size: 14px; line-height: 1.8;">
+                  <li>${texts.step1}</li>
+                  <li>${texts.step2}</li>
+                  <li>${texts.step3}</li>
+                </ol>
+              </div>
+
+              <!-- Reset Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${resetUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(230, 146, 22, 0.3);">
+                      ${texts.resetButton}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Warning -->
+              <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin: 30px 0; border-radius: 6px;">
+                <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.6;">
+                  ${texts.expiryWarning}
+                </p>
+              </div>
+
+              <!-- Security Info -->
+              <div style="margin: 30px 0 0 0; padding-top: 30px; border-top: 1px solid #e0e0e0;">
+                <p style="margin: 0 0 15px 0; color: #666666; font-size: 14px; line-height: 1.6;">
+                  ${texts.notRequested}
+                </p>
+                <p style="margin: 0; color: #666666; font-size: 13px; line-height: 1.6;">
+                  <strong>${texts.securityNote}</strong>
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
+              <p style="margin: 0 0 10px 0; color: #999999; font-size: 12px; line-height: 1.5;">
+                ${texts.footerText}
+              </p>
+              <p style="margin: 0; color: #999999; font-size: 12px;">
+                ${texts.footerCopyright}
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `;
+
+      const { data, error } = await this.resend.emails.send({
+        from: EMAIL_FROM,
+        to: [userEmail],
+        subject: subject,
+        html: htmlContent,
+        attachments: logoBase64 ? [
+          {
+            filename: 'logo.png',
+            content: logoBase64,
+            content_id: 'logo',
+          }
+        ] : []
+      });
+
+      if (error) {
+        console.error('❌ Error enviando email de restablecimiento:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log(`✅ Email de restablecimiento enviado: ${data.id}`);
+      return { success: true, messageId: data.id };
+
+    } catch (error) {
+      console.error('❌ Error en sendPasswordResetEmail:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // Exportar instancia singleton
