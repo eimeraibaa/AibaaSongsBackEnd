@@ -1,0 +1,71 @@
+========================================
+PASOS PARA EJECUTAR MIGRACIÓN EN RAILWAY
+========================================
+
+1. Abre tu navegador y ve a: https://railway.app
+
+2. Haz login y abre tu proyecto
+
+3. Haz click en el servicio "Postgres" o "PostgreSQL"
+
+4. Busca una de estas opciones en el menú:
+   - "Data"
+   - "Query"
+   - "Connect" → "Query"
+
+5. Deberías ver un editor de SQL (una caja de texto)
+
+6. COPIA este SQL exacto:
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "resetToken" VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS "resetTokenExpires" TIMESTAMP WITH TIME ZONE;
+CREATE INDEX IF NOT EXISTS idx_users_reset_token ON users("resetToken");
+
+7. PEGA el SQL en el editor
+
+8. Haz click en "Run" o "Execute" o el botón similar
+
+9. VERIFICA que funcionó ejecutando esto:
+
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'users'
+AND column_name IN ('resetToken', 'resetTokenExpires');
+
+10. Deberías ver 2 filas:
+    resetToken | character varying
+    resetTokenExpires | timestamp with time zone
+
+11. ¡LISTO! Ahora reinicia tu servicio backend en Railway
+
+========================================
+SI NO ENCUENTRAS LA OPCIÓN DE QUERY:
+========================================
+
+Railway puede tener diferentes interfaces. Si no ves "Query":
+
+OPCIÓN A: Busca "Connect" y debería mostrarte opciones de conexión
+OPCIÓN B: Busca un ícono de terminal o código
+OPCIÓN C: Puede estar en Settings → Connect → Query
+
+========================================
+ALTERNATIVA: RAILWAY CLI
+========================================
+
+Si prefieres usar la terminal (más rápido):
+
+1. Instala Railway CLI:
+   npm install -g @railway/cli
+
+2. Login:
+   railway login
+
+3. Vincula el proyecto:
+   railway link
+
+4. Ejecuta:
+   railway run npm run migrate:password-reset
+
+Esto ejecutará la migración EN RAILWAY, no localmente.
+
+========================================
