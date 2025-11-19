@@ -812,6 +812,7 @@ class EmailService {
           {
             filename: 'logo.png',
             content: logoBase64,
+            disposition: 'inline',
             content_id: 'logo',
           }
         ],
@@ -988,6 +989,7 @@ class EmailService {
           {
             filename: 'logo.png',
             content: logoBase64,
+            disposition: 'inline',
             content_id: 'logo',
           }
         ],
@@ -1199,6 +1201,7 @@ class EmailService {
           {
             filename: 'logo.png',
             content: logoBase64,
+            disposition: 'inline',
             content_id: 'logo',
           }
         ],
