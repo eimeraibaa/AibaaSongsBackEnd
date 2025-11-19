@@ -1,11 +1,17 @@
 import { Resend } from 'resend';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'soporte@makeursong.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://makeursong.com';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://api.makeursong.com';
-const LOGO_URL = process.env.LOGO_URL || 'https://makeursong.com/logo_sin_fondo.png';
+const LOGO_PATH = path.join(__dirname, '../assets/images/logo-sin-letra.png');
 
 /**
  * Servicio de Email FINAL - Make Ur Song
@@ -496,7 +502,7 @@ class EmailService {
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom: 25px;">
                 <tr>
                   <td style="text-align: center;">
-                    <img src="${LOGO_URL}"
+                    <img src="cid:logo"
                          alt="Make Ur Song"
                          width="80"
                          height="80"
@@ -792,12 +798,23 @@ class EmailService {
         ? '🎵 Your personalized song is ready!'
         : '🎵 ¡Tu canción personalizada está lista!';
 
-      // 6. Enviar email
+      // 6. Leer el logo como base64
+      const logoBuffer = fs.readFileSync(LOGO_PATH);
+      const logoBase64 = logoBuffer.toString('base64');
+
+      // 7. Enviar email con el logo adjunto
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
         subject: subject,
         html: htmlContent,
+        attachments: [
+          {
+            filename: 'logo.png',
+            content: logoBase64,
+            content_id: 'logo',
+          }
+        ],
       });
 
       if (error) {
@@ -958,11 +975,22 @@ class EmailService {
 </html>
       `;
 
+      // Leer el logo
+      const logoBuffer = fs.readFileSync(LOGO_PATH);
+      const logoBase64 = logoBuffer.toString('base64');
+
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
         subject: subject,
         html: htmlContent,
+        attachments: [
+          {
+            filename: 'logo.png',
+            content: logoBase64,
+            content_id: 'logo',
+          }
+        ],
       });
 
       if (error) {
@@ -1158,11 +1186,22 @@ class EmailService {
 </html>
       `;
 
+      // Leer el logo
+      const logoBuffer = fs.readFileSync(LOGO_PATH);
+      const logoBase64 = logoBuffer.toString('base64');
+
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
         subject: subject,
         html: htmlContent,
+        attachments: [
+          {
+            filename: 'logo.png',
+            content: logoBase64,
+            content_id: 'logo',
+          }
+        ],
       });
 
       if (error) {
