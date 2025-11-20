@@ -7,6 +7,7 @@ import {
   checkSunoWebhookConfig,
   updateOrderEmail
 } from '../controllers/webhook.controller.js';
+import { fixSongForeignKey } from '../migrations/fix-song-fkey-endpoint.js';
 
 const router = Router();
 
@@ -45,5 +46,13 @@ router.post('/update-order-email/:orderId', updateOrderEmail);
  * Envía el correo de canciones listas de una orden específica
  */
 router.post('/test-email/:orderId', testEmailSend);
+
+/**
+ * Endpoint para corregir la foreign key de la tabla Songs
+ * GET /webhook/fix-song-fkey
+ * Corrige la foreign key constraint para que apunte a order_items en lugar de orders
+ * IMPORTANTE: Solo ejecutar una vez
+ */
+router.get('/fix-song-fkey', fixSongForeignKey);
 
 export default router;
