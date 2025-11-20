@@ -8,6 +8,7 @@ import ordersRoutes from './routes/orders.routes.js';
 import songRouter from './routes/song.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import pricingRoutes from './routes/pricing.routes.js';
+import assetsRoutes from './routes/assets.routes.js';
 import { setupAuth } from './middleware/auth.js';
 
 const app = express()
@@ -63,6 +64,7 @@ app.use('/cart', cartRoutes)
 app.use('/orders', ordersRoutes)
 app.use('/song', songRouter)
 app.use('/pricing', pricingRoutes)
+app.use('/assets', assetsRoutes)
 
 app.use((err, req, res, next) => {
   console.error('Error global capturado:', err);
