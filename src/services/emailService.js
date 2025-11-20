@@ -502,7 +502,7 @@ class EmailService {
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom: 25px;">
                 <tr>
                   <td style="text-align: center;">
-                    <img src="cid:logo"
+                    <img src="data:image/png;base64,${logoBase64}"
                          alt="Make Ur Song"
                          width="80"
                          height="80"
@@ -799,23 +799,20 @@ class EmailService {
         : '🎵 ¡Tu canción personalizada está lista!';
 
       // 6. Leer el logo como base64
-      const logoBuffer = fs.readFileSync(LOGO_PATH);
-      const logoBase64 = logoBuffer.toString('base64');
+      let logoBase64 = '';
+      try {
+        const logoBuffer = fs.readFileSync(LOGO_PATH);
+        logoBase64 = logoBuffer.toString('base64');
+      } catch (error) {
+        console.warn('⚠️ Logo no encontrado:', error.message);
+      }
 
-      // 7. Enviar email con el logo adjunto
+      // 7. Enviar email
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
         subject: subject,
         html: htmlContent,
-        attachments: [
-          {
-            filename: 'logo.png',
-            content: logoBase64,
-            disposition: 'inline',
-            content_id: 'logo',
-          }
-        ],
       });
 
       if (error) {
@@ -977,22 +974,19 @@ class EmailService {
       `;
 
       // Leer el logo
-      const logoBuffer = fs.readFileSync(LOGO_PATH);
-      const logoBase64 = logoBuffer.toString('base64');
+      let logoBase64 = '';
+      try {
+        const logoBuffer = fs.readFileSync(LOGO_PATH);
+        logoBase64 = logoBuffer.toString('base64');
+      } catch (error) {
+        console.warn('⚠️ Logo no encontrado:', error.message);
+      }
 
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
         subject: subject,
         html: htmlContent,
-        attachments: [
-          {
-            filename: 'logo.png',
-            content: logoBase64,
-            disposition: 'inline',
-            content_id: 'logo',
-          }
-        ],
       });
 
       if (error) {
@@ -1189,22 +1183,19 @@ class EmailService {
       `;
 
       // Leer el logo
-      const logoBuffer = fs.readFileSync(LOGO_PATH);
-      const logoBase64 = logoBuffer.toString('base64');
+      let logoBase64 = '';
+      try {
+        const logoBuffer = fs.readFileSync(LOGO_PATH);
+        logoBase64 = logoBuffer.toString('base64');
+      } catch (error) {
+        console.warn('⚠️ Logo no encontrado:', error.message);
+      }
 
       const { data, error } = await this.resend.emails.send({
         from: EMAIL_FROM,
         to: userEmail,
         subject: subject,
         html: htmlContent,
-        attachments: [
-          {
-            filename: 'logo.png',
-            content: logoBase64,
-            disposition: 'inline',
-            content_id: 'logo',
-          }
-        ],
       });
 
       if (error) {
@@ -1304,7 +1295,7 @@ class EmailService {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #e69216 0%, #d67d0a 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
-              ${logoBase64 ? `<img src="cid:logo" alt="Make Ur Song" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 50%; background: white; padding: 10px;">` : ''}
+              ${logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" alt="Make Ur Song" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 50%; background: white; padding: 10px;">` : ''}
               <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: 700;">
                 ${texts.title}
               </h1>
@@ -1392,13 +1383,6 @@ class EmailService {
         to: [userEmail],
         subject: subject,
         html: htmlContent,
-        attachments: logoBase64 ? [
-          {
-            filename: 'logo.png',
-            content: logoBase64,
-            content_id: 'logo',
-          }
-        ] : []
       });
 
       if (error) {
