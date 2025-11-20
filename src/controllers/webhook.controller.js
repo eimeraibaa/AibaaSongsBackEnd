@@ -344,7 +344,12 @@ async function generateSongsForOrder(orderId) {
     // Generar cada canción
     for (const item of orderItems) {
       try {
-        console.log(`🎵 Generando canción para item ${item.id}...`);
+        console.log('========================================');
+        console.log(`🎵 Generando canción ${orderItems.indexOf(item) + 1}/${orderItems.length} para item ${item.id}...`);
+        console.log(`   - Dedicada a: ${item.dedicatedTo || 'N/A'}`);
+        console.log(`   - Género: ${item.genres?.[0] || 'pop'}`);
+        console.log(`   - Idioma: ${item.language || 'N/A'}`);
+        console.log('========================================');
 
         // Llamar a Suno AI con callbackUrl si está configurado
         const sunoResult = await sunoService.generateSong(
@@ -391,7 +396,32 @@ async function generateSongsForOrder(orderId) {
         }
 
       } catch (error) {
-        console.error(`❌ Error generando canción para item ${item.id}:`, error);
+        console.error('========================================');
+        console.error(`❌ ERROR CRÍTICO generando canción para item ${item.id}:`, error);
+        console.error('Stack:', error.stack);
+        console.error('========================================');
+
+        // IMPORTANTE: Crear un registro de Song con estado 'failed' para que el sistema sepa que esta canción falló
+        // Sin esto, si falla 1 de 3 canciones, solo habrá 2 Songs en la DB y el email se enviará incompleto
+        try {
+          const failedSong = await storage.createSong(item.id, {
+            title: item.dedicatedTo || 'Canción Personalizada',
+            lyrics: item.lyrics,
+            audioUrl: null,
+            sunoSongId: `failed-${Date.now()}`, // ID temporal para canción fallida
+            genre: item.genres[0] || 'pop',
+            language: item.language,
+          });
+
+          // Marcar inmediatamente como fallida
+          await storage.updateSongStatus(failedSong.id, 'failed');
+
+          console.error(`⚠️ Registro de canción fallida creado con ID: ${failedSong.id}`);
+          console.error(`   Esto permite que el sistema sepa que esta canción falló y no espere indefinidamente.`);
+        } catch (createError) {
+          console.error(`❌ Error creando registro de canción fallida:`, createError);
+        }
+
         // Continuar con los demás items aunque falle uno
       }
     }
@@ -744,14 +774,41 @@ async function checkAndNotifyOrderCompletion(orderId) {
     console.log(`🔍 Verificando completitud de orden ${orderId}...`);
     console.log('========================================');
 
+    // Obtener la orden primero para verificar el número esperado de canciones
+    const order = await storage.getOrderById(orderId);
+    if (!order) {
+      console.error(`❌ Orden ${orderId} no encontrada`);
+      return;
+    }
+
+    // Obtener los OrderItems para saber cuántas canciones DEBERÍAN existir
+    const orderItems = await storage.getOrderItemsWithLyrics(orderId);
+    const expectedSongsCount = orderItems.length;
+
     // Obtener todas las canciones de la orden
     const songs = await storage.getOrderSongs(orderId);
 
     console.log(`📊 Total canciones en orden: ${songs.length}`);
+    console.log(`📊 Canciones esperadas (según OrderItems): ${expectedSongsCount}`);
 
     if (songs.length === 0) {
       console.warn(`⚠️ No hay canciones para la orden ${orderId}`);
       return;
+    }
+
+    // ADVERTENCIA: Si hay menos canciones de las esperadas
+    if (songs.length < expectedSongsCount) {
+      console.warn('========================================');
+      console.warn(`⚠️ ADVERTENCIA: FALTAN CANCIONES`);
+      console.warn(`   - Esperadas: ${expectedSongsCount} (según OrderItems)`);
+      console.warn(`   - Encontradas: ${songs.length} (en tabla Songs)`);
+      console.warn(`   - Faltan: ${expectedSongsCount - songs.length}`);
+      console.warn('');
+      console.warn('Posibles causas:');
+      console.warn('  1. Error en generateSongsForOrder() al crear algunas canciones');
+      console.warn('  2. Llamada a Suno falló para algunas canciones');
+      console.warn('  3. Error de base de datos al crear Songs');
+      console.warn('========================================');
     }
 
     // Log de estado de cada canción
@@ -768,6 +825,9 @@ async function checkAndNotifyOrderCompletion(orderId) {
       console.log(`🔄 Orden ${orderId} aún tiene canciones generándose`);
       const pending = songs.filter(s => s.status === 'generating');
       console.log(`⏳ Canciones pendientes: ${pending.length}`);
+      pending.forEach(s => {
+        console.log(`   - Canción ${s.id}: ${s.title || 'N/A'} - TaskId: ${s.sunoSongId}`);
+      });
       return;
     }
 
@@ -775,14 +835,6 @@ async function checkAndNotifyOrderCompletion(orderId) {
     const failedSongs = songs.filter(song => song.status === 'failed');
 
     console.log(`📊 Orden ${orderId}: ${completedSongs.length} completadas, ${failedSongs.length} fallidas`);
-
-    // Obtener la orden con el email
-    const order = await storage.getOrderById(orderId);
-
-    if (!order) {
-      console.error(`❌ Orden ${orderId} no encontrada`);
-      return;
-    }
 
     console.log(`📧 Email del usuario: ${order.userEmail || 'N/A'}`);
 
