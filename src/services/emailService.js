@@ -342,7 +342,7 @@ class EmailService {
   /**
    * Genera el template completo del email optimizado para iOS
    */
-  generateEmailTemplate(orderId, songs, detectedLanguage, magicToken) {
+  generateEmailTemplate(orderId, songs, detectedLanguage, magicToken, logoBase64 = '') {
     // Separar canción principal y regalo
     const mainSongs = songs.filter(s => !s.isGift);
     const giftSongs = songs.filter(s => s.isGift);
@@ -790,15 +790,7 @@ class EmailService {
       console.log(`🌍 Idioma detectado: ${detectedLanguage}`);
       console.log(`📈 Conteos: EN=${languageCounts.en || 0}, ES=${languageCounts.es || 0}`);
 
-      // 5. Generar template optimizado
-      const htmlContent = this.generateEmailTemplate(orderId, enrichedSongs, detectedLanguage, magicToken);
-
-      // Subject según idioma
-      const subject = detectedLanguage === 'en'
-        ? '🎵 Your personalized song is ready!'
-        : '🎵 ¡Tu canción personalizada está lista!';
-
-      // 6. Leer el logo como base64
+      // 5. Leer el logo como base64 (ANTES de generar el template)
       let logoBase64 = '';
       try {
         const logoBuffer = fs.readFileSync(LOGO_PATH);
@@ -806,6 +798,14 @@ class EmailService {
       } catch (error) {
         console.warn('⚠️ Logo no encontrado:', error.message);
       }
+
+      // 6. Generar template optimizado
+      const htmlContent = this.generateEmailTemplate(orderId, enrichedSongs, detectedLanguage, magicToken, logoBase64);
+
+      // Subject según idioma
+      const subject = detectedLanguage === 'en'
+        ? '🎵 Your personalized song is ready!'
+        : '🎵 ¡Tu canción personalizada está lista!';
 
       // 7. Enviar email
       const { data, error } = await this.resend.emails.send({
