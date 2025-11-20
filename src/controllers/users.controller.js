@@ -279,17 +279,17 @@ export const forgotPassword = async (req, res) => {
  */
 export const resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { token, password } = req.body;
 
     // Validar campos requeridos
-    if (!token || !newPassword) {
+    if (!token || !password) {
       return res.status(400).json({
         error: 'Token y nueva contraseña son requeridos'
       });
     }
 
     // Validar longitud mínima de contraseña
-    if (newPassword.length < 8) {
+    if (password.length < 8) {
       return res.status(400).json({
         error: 'La contraseña debe tener al menos 8 caracteres'
       });
@@ -317,7 +317,7 @@ export const resetPassword = async (req, res) => {
     }
 
     // Hashear la nueva contraseña
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Actualizar contraseña y limpiar tokens
     await storage.updateUser(user.id, {
