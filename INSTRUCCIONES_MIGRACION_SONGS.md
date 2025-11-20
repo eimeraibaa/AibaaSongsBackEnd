@@ -33,7 +33,31 @@ Para bases de datos existentes, es necesario ejecutar el script de migración qu
 
 ## Cómo Ejecutar la Migración
 
-### Opción 1: Ejecutar el script de migración (Recomendado)
+### Opción 1: Usar el endpoint HTTP (Recomendado para producción)
+
+Si no tienes acceso directo a la base de datos (por ejemplo, en Render o Heroku):
+
+```bash
+curl https://tu-dominio.com/webhook/fix-song-fkey
+```
+
+O visita en el navegador:
+```
+https://tu-dominio.com/webhook/fix-song-fkey
+```
+
+Este endpoint:
+1. Verifica la constraint actual
+2. Elimina la constraint incorrecta `Songs_orderItemId_fkey` (si existe)
+3. Crea una nueva constraint correcta que apunta a `order_items`
+4. Verifica que la nueva constraint esté configurada correctamente
+5. Retorna un JSON con el resultado
+
+**IMPORTANTE**: Solo necesitas ejecutar esto una vez.
+
+### Opción 2: Ejecutar el script de migración localmente
+
+Si tienes acceso a la base de datos localmente:
 
 ```bash
 node fix-song-foreign-key.js
@@ -44,7 +68,7 @@ Este script:
 2. Crea una nueva constraint correcta que apunta a `order_items`
 3. Verifica que la nueva constraint esté configurada correctamente
 
-### Opción 2: Ejecutar manualmente en la base de datos
+### Opción 3: Ejecutar manualmente en la base de datos
 
 Si prefieres ejecutar la migración directamente en PostgreSQL:
 
