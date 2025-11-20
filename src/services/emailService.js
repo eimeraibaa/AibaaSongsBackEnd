@@ -502,11 +502,17 @@ class EmailService {
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom: 25px;">
                 <tr>
                   <td style="text-align: center;">
+                    ${logoBase64 ? `
                     <img src="data:image/png;base64,${logoBase64}"
                          alt="Make Ur Song"
                          width="80"
                          height="80"
                          style="display: block; margin: 0 auto 15px auto; border: none;"/>
+                    ` : `
+                    <div style="width: 80px; height: 80px; margin: 0 auto 15px auto; background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                      <span style="font-size: 32px; font-weight: 900; color: #e69216;">🎵</span>
+                    </div>
+                    `}
 
                     <div style="background-color: #ffffff; padding: 12px 30px; border-radius: 50px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: inline-block;">
                       <span style="font-size: 24px; font-weight: 800; color: #e69216; letter-spacing: 0.5px;">Make Ur Song</span>
@@ -793,10 +799,39 @@ class EmailService {
       // 5. Leer el logo como base64 (ANTES de generar el template)
       let logoBase64 = '';
       try {
-        const logoBuffer = fs.readFileSync(LOGO_PATH);
-        logoBase64 = logoBuffer.toString('base64');
+        console.log(`📂 Intentando leer logo desde: ${LOGO_PATH}`);
+        console.log(`📂 __dirname actual: ${__dirname}`);
+        console.log(`📂 process.cwd(): ${process.cwd()}`);
+
+        // Verificar si el archivo existe
+        if (!fs.existsSync(LOGO_PATH)) {
+          console.error(`❌ El archivo de logo NO existe en: ${LOGO_PATH}`);
+
+          // Intentar rutas alternativas
+          const alternativePaths = [
+            path.join(process.cwd(), 'src/assets/images/logo-sin-letra.png'),
+            path.join(process.cwd(), 'assets/images/logo-sin-letra.png'),
+            '/app/src/assets/images/logo-sin-letra.png'
+          ];
+
+          for (const altPath of alternativePaths) {
+            console.log(`🔍 Probando ruta alternativa: ${altPath}`);
+            if (fs.existsSync(altPath)) {
+              console.log(`✅ Logo encontrado en ruta alternativa: ${altPath}`);
+              const logoBuffer = fs.readFileSync(altPath);
+              logoBase64 = logoBuffer.toString('base64');
+              break;
+            }
+          }
+        } else {
+          console.log(`✅ Logo encontrado en: ${LOGO_PATH}`);
+          const logoBuffer = fs.readFileSync(LOGO_PATH);
+          logoBase64 = logoBuffer.toString('base64');
+          console.log(`✅ Logo convertido a base64 (${logoBase64.length} caracteres)`);
+        }
       } catch (error) {
-        console.warn('⚠️ Logo no encontrado:', error.message);
+        console.error('❌ Error leyendo logo:', error.message);
+        console.error('Stack:', error.stack);
       }
 
       // 6. Generar template optimizado
