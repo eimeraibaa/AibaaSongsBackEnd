@@ -58,7 +58,42 @@ export const fixSongForeignKey = async (req, res) => {
       results.push('⚠️ No se encontró constraint existente');
     }
 
-    // 2. Eliminar constraint incorrecta
+    // 2. Verificar si hay registros huérfanos en Songs
+    console.log('📊 Verificando registros huérfanos en Songs...');
+    results.push('Verificando registros huérfanos en Songs...');
+
+    const [orphanedSongs] = await sequelize.query(`
+      SELECT s.id, s."orderItemId", s.title, s.status, s."createdAt"
+      FROM "Songs" s
+      LEFT JOIN "order_items" oi ON s."orderItemId" = oi.id
+      WHERE oi.id IS NULL;
+    `);
+
+    if (orphanedSongs.length > 0) {
+      results.push(`⚠️ Encontrados ${orphanedSongs.length} registros huérfanos en Songs`);
+      results.push('Estos registros tienen orderItemId que no existen en order_items:');
+      orphanedSongs.forEach(song => {
+        results.push(`  - Song ID: ${song.id}, orderItemId: ${song.orderItemId}, title: ${song.title || 'N/A'}, status: ${song.status}`);
+      });
+
+      // Eliminar los registros huérfanos
+      results.push('🧹 Limpiando registros huérfanos...');
+      console.log('🧹 Limpiando registros huérfanos...');
+
+      const orphanedIds = orphanedSongs.map(s => s.id);
+      await sequelize.query(`
+        DELETE FROM "Songs"
+        WHERE id IN (${orphanedIds.join(',')});
+      `);
+
+      results.push(`✅ Eliminados ${orphanedSongs.length} registros huérfanos`);
+      console.log(`✅ Eliminados ${orphanedSongs.length} registros huérfanos`);
+    } else {
+      results.push('✅ No se encontraron registros huérfanos');
+      console.log('✅ No se encontraron registros huérfanos');
+    }
+
+    // 3. Eliminar constraint incorrecta
     console.log('📊 Eliminando constraint incorrecta...');
     results.push('Eliminando constraint incorrecta...');
 
@@ -74,7 +109,7 @@ export const fixSongForeignKey = async (req, res) => {
       console.log('⚠️ Error eliminando constraint:', error.message);
     }
 
-    // 3. Crear nueva constraint correcta
+    // 4. Crear nueva constraint correcta
     console.log('📊 Creando nueva foreign key correcta...');
     results.push('Creando nueva foreign key correcta...');
 
@@ -90,7 +125,7 @@ export const fixSongForeignKey = async (req, res) => {
     results.push('✅ Nueva foreign key creada');
     console.log('✅ Nueva foreign key creada');
 
-    // 4. Verificar la nueva constraint
+    // 5. Verificar la nueva constraint
     console.log('📊 Verificando la nueva constraint...');
     results.push('Verificando la nueva constraint...');
 
