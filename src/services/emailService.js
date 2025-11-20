@@ -342,7 +342,7 @@ class EmailService {
   /**
    * Genera el template completo del email optimizado para iOS
    */
-  generateEmailTemplate(orderId, songs, detectedLanguage, magicToken, logoBase64 = '') {
+  generateEmailTemplate(orderId, songs, detectedLanguage, magicToken, logoUrl = '') {
     // Separar canción principal y regalo
     const mainSongs = songs.filter(s => !s.isGift);
     const giftSongs = songs.filter(s => s.isGift);
@@ -502,8 +502,8 @@ class EmailService {
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom: 25px;">
                 <tr>
                   <td style="text-align: center;">
-                    ${logoBase64 ? `
-                    <img src="data:image/png;base64,${logoBase64}"
+                    ${logoUrl ? `
+                    <img src="${logoUrl}"
                          alt="Make Ur Song"
                          width="80"
                          height="80"
@@ -796,46 +796,14 @@ class EmailService {
       console.log(`🌍 Idioma detectado: ${detectedLanguage}`);
       console.log(`📈 Conteos: EN=${languageCounts.en || 0}, ES=${languageCounts.es || 0}`);
 
-      // 5. Leer el logo como base64 (ANTES de generar el template)
-      let logoBase64 = '';
-      try {
-        console.log(`📂 Intentando leer logo desde: ${LOGO_PATH}`);
-        console.log(`📂 __dirname actual: ${__dirname}`);
-        console.log(`📂 process.cwd(): ${process.cwd()}`);
-
-        // Verificar si el archivo existe
-        if (!fs.existsSync(LOGO_PATH)) {
-          console.error(`❌ El archivo de logo NO existe en: ${LOGO_PATH}`);
-
-          // Intentar rutas alternativas
-          const alternativePaths = [
-            path.join(process.cwd(), 'src/assets/images/logo-sin-letra.png'),
-            path.join(process.cwd(), 'assets/images/logo-sin-letra.png'),
-            '/app/src/assets/images/logo-sin-letra.png'
-          ];
-
-          for (const altPath of alternativePaths) {
-            console.log(`🔍 Probando ruta alternativa: ${altPath}`);
-            if (fs.existsSync(altPath)) {
-              console.log(`✅ Logo encontrado en ruta alternativa: ${altPath}`);
-              const logoBuffer = fs.readFileSync(altPath);
-              logoBase64 = logoBuffer.toString('base64');
-              break;
-            }
-          }
-        } else {
-          console.log(`✅ Logo encontrado en: ${LOGO_PATH}`);
-          const logoBuffer = fs.readFileSync(LOGO_PATH);
-          logoBase64 = logoBuffer.toString('base64');
-          console.log(`✅ Logo convertido a base64 (${logoBase64.length} caracteres)`);
-        }
-      } catch (error) {
-        console.error('❌ Error leyendo logo:', error.message);
-        console.error('Stack:', error.stack);
-      }
+      // 5. Usar URL del logo (más confiable que base64 para emails)
+      // IMPORTANTE: El logo se sirve desde /assets/logo endpoint
+      // Esto evita problemas de tamaño con base64 inline en clientes de email
+      const logoUrl = `${BACKEND_URL}/assets/logo`;
+      console.log(`🖼️ Logo URL: ${logoUrl}`);
 
       // 6. Generar template optimizado
-      const htmlContent = this.generateEmailTemplate(orderId, enrichedSongs, detectedLanguage, magicToken, logoBase64);
+      const htmlContent = this.generateEmailTemplate(orderId, enrichedSongs, detectedLanguage, magicToken, logoUrl);
 
       // Subject según idioma
       const subject = detectedLanguage === 'en'
