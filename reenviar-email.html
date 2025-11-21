@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reenviar Email de Orden - Make Ur Song</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      max-width: 500px;
+      width: 100%;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      color: #333;
+      margin: 0 0 10px 0;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin: 0 0 30px 0;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      color: #555;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      font-size: 16px;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    button {
+      width: 100%;
+      font-size: 16px;
+      padding: 14px;
+      margin: 20px 0 0 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #resultado {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .exito {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .resultado-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    .resultado-content {
+      white-space: pre-line;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 Reenviar Email de Orden</h1>
+    <p class="subtitle">
+      Ingresa el ID de la orden para reenviar el correo con las canciones completadas al usuario.
+    </p>
+
+    <label for="orderId">Order ID</label>
+    <input
+      type="number"
+      id="orderId"
+      placeholder="Ejemplo: 27"
+      min="1"
+      autocomplete="off"
+    >
+
+    <button id="btnEnviar" onclick="reenviarEmail()">
+      📧 Reenviar Email
+    </button>
+
+    <div id="resultado"></div>
+
+    <div class="footer">
+      Make Ur Song © 2025 - Panel de Administración
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://aibaasongsbackend-production.up.railway.app';
+
+    async function reenviarEmail() {
+      const orderId = document.getElementById('orderId').value;
+      const resultado = document.getElementById('resultado');
+      const btnEnviar = document.getElementById('btnEnviar');
+
+      if (!orderId) {
+        mostrarResultado('⚠️ Error', 'Por favor ingresa un ID de orden válido', 'error');
+        return;
+      }
+
+      // Mostrar loading
+      btnEnviar.disabled = true;
+      btnEnviar.innerHTML = '<span class="spinner"></span>Enviando...';
+      resultado.style.display = 'none';
+
+      try {
+        const response = await fetch(
+          `${API_URL}/webhook/test-email/${orderId}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+          mostrarResultado(
+            '✅ Email Enviado Exitosamente',
+            `Email reenviado a: ${data.email || 'usuario'}\n` +
+            `Orden ID: ${data.orderId || orderId}\n` +
+            `Canciones enviadas: ${data.songsCount || 0}\n\n` +
+            `El usuario debería recibir el correo en unos minutos.`,
+            'exito'
+          );
+          // Limpiar el input después del éxito
+          setTimeout(() => {
+            document.getElementById('orderId').value = '';
+          }, 2000);
+        } else {
+          mostrarResultado(
+            '❌ Error al Enviar',
+            data.message || 'Error desconocido. Verifica que:\n' +
+            '• El Order ID sea correcto\n' +
+            '• La orden tenga canciones completadas\n' +
+            '• La orden tenga un email configurado',
+            'error'
+          );
+        }
+      } catch (error) {
+        mostrarResultado(
+          '❌ Error de Conexión',
+          `No se pudo conectar con el servidor:\n${error.message}\n\n` +
+          'Verifica tu conexión a internet e intenta nuevamente.',
+          'error'
+        );
+      } finally {
+        btnEnviar.disabled = false;
+        btnEnviar.innerHTML = '📧 Reenviar Email';
+      }
+    }
+
+    function mostrarResultado(titulo, mensaje, tipo) {
+      const resultado = document.getElementById('resultado');
+      resultado.innerHTML = `
+        <div class="resultado-title">${titulo}</div>
+        <div class="resultado-content">${mensaje}</div>
+      `;
+      resultado.className = tipo;
+      resultado.style.display = 'block';
+    }
+
+    // Permitir Enter para enviar
+    document.getElementById('orderId').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        reenviarEmail();
+      }
+    });
+
+    // Auto-focus en el input al cargar
+    document.getElementById('orderId').focus();
+  </script>
+</body>
+</html>
