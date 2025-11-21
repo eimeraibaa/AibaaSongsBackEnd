@@ -687,22 +687,22 @@ class EmailService {
                 <tr>
                   <td style="padding: 0 10px;">
                     <a href="https://instagram.com/makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://cdn.simpleicons.org/instagram/E4405F" alt="Instagram" width="40" height="40" style="display: block; border: none; border-radius: 8px;"/>
+                      <img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" height="40" style="display: block; border: none; border-radius: 6px;"/>
                     </a>
                   </td>
                   <td style="padding: 0 10px;">
                     <a href="https://tiktok.com/@makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://cdn.simpleicons.org/tiktok/000000" alt="TikTok" width="40" height="40" style="display: block; border: none; border-radius: 8px;"/>
+                      <img src="https://img.shields.io/badge/TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white" alt="TikTok" height="40" style="display: block; border: none; border-radius: 6px;"/>
                     </a>
                   </td>
                   <td style="padding: 0 10px;">
                     <a href="https://youtube.com/@makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://cdn.simpleicons.org/youtube/FF0000" alt="YouTube" width="40" height="40" style="display: block; border: none; border-radius: 8px;"/>
+                      <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" height="40" style="display: block; border: none; border-radius: 6px;"/>
                     </a>
                   </td>
                   <td style="padding: 0 10px;">
-                    <a href="https://facebook.com/makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://cdn.simpleicons.org/facebook/1877F2" alt="Facebook" width="40" height="40" style="display: block; border: none; border-radius: 8px;"/>
+                    <a href="https://facebook.com/@makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
+                      <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook" height="40" style="display: block; border: none; border-radius: 6px;"/>
                     </a>
                   </td>
                 </tr>
