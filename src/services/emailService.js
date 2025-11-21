@@ -683,26 +683,26 @@ class EmailService {
                 ${texts.followText}
               </p>
 
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" class="social-icons">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" class="social-icons" style="margin: 0 auto;">
                 <tr>
-                  <td style="padding: 0 10px;">
-                    <a href="https://instagram.com/makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" height="40" style="display: block; border: none; border-radius: 6px;"/>
+                  <td style="padding: 0 8px;">
+                    <a href="https://instagram.com/makeursong" target="_blank" style="display: inline-block; text-decoration: none; background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      📷 Instagram
                     </a>
                   </td>
-                  <td style="padding: 0 10px;">
-                    <a href="https://tiktok.com/@makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://img.shields.io/badge/TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white" alt="TikTok" height="40" style="display: block; border: none; border-radius: 6px;"/>
+                  <td style="padding: 0 8px;">
+                    <a href="https://tiktok.com/@makeursong" target="_blank" style="display: inline-block; text-decoration: none; background-color: #000000; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      🎵 TikTok
                     </a>
                   </td>
-                  <td style="padding: 0 10px;">
-                    <a href="https://youtube.com/@makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" height="40" style="display: block; border: none; border-radius: 6px;"/>
+                  <td style="padding: 0 8px;">
+                    <a href="https://youtube.com/@makeursong" target="_blank" style="display: inline-block; text-decoration: none; background-color: #FF0000; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      ▶ YouTube
                     </a>
                   </td>
-                  <td style="padding: 0 10px;">
-                    <a href="https://facebook.com/@makeursong" target="_blank" style="text-decoration: none; display: inline-block;">
-                      <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook" height="40" style="display: block; border: none; border-radius: 6px;"/>
+                  <td style="padding: 0 8px;">
+                    <a href="https://facebook.com/makeursong" target="_blank" style="display: inline-block; text-decoration: none; background-color: #1877F2; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                      f Facebook
                     </a>
                   </td>
                 </tr>
