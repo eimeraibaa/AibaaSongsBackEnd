@@ -12,6 +12,7 @@ const EMAIL_FROM = process.env.EMAIL_FROM || 'soporte@makeursong.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://makeursong.com';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://api.makeursong.com';
 const LOGO_PATH = path.join(__dirname, '../assets/images/logo-sin-letra.png');
+const EMAIL_SUPPORT = process.env.EMAIL_SUPPORT || 'Support@makeursong.com'
 
 /**
  * Servicio de Email FINAL - Make Ur Song
@@ -630,8 +631,8 @@ class EmailService {
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #666;">
                   ${texts.supportContact}
-                  <a href="mailto:${EMAIL_FROM}" style="color: #4CAF50; text-decoration: none; font-weight: 600;">
-                    ${EMAIL_FROM}
+                  <a href="mailto:${EMAIL_SUPPORT}" style="color: #4CAF50; text-decoration: none; font-weight: 600;">
+                    ${EMAIL_SUPPORT}
                   </a>
                 </p>
               </div>
@@ -691,7 +692,7 @@ class EmailService {
                     </a>
                   </td>
                   <td style="padding: 0 8px;">
-                    <a href="https://tiktok.com/@makeursong" target="_blank" style="display: inline-block; text-decoration: none; background-color: #000000; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <a href="https://tiktok.com/@make_ur_song" target="_blank" style="display: inline-block; text-decoration: none; background-color: #000000; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
                       🎵 TikTok
                     </a>
                   </td>
