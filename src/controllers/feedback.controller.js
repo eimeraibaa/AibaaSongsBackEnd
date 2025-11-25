@@ -61,12 +61,12 @@ export const getSongFeedback = async (req, res) => {
 
     if (song) {
       // Consultar order item y su orden para verificar owner
-      const orderItem = await OrderItem.findByPk(song.orderItemId, { include: [Order] });
-      if (orderItem && orderItem.Order && orderItem.Order.userId) ownerId = orderItem.Order.userId;
+      const orderItem = await OrderItem.findByPk(song.orderItemId, { include: [{ model: Order, as: 'order' }] });
+      if (orderItem && orderItem.order && orderItem.order.userId) ownerId = orderItem.order.userId;
     } else {
       // Si no está en Song, buscar en order_items directamente
-      const orderItem = await OrderItem.findByPk(songId, { include: [Order] });
-      if (orderItem && orderItem.Order && orderItem.Order.userId) ownerId = orderItem.Order.userId;
+      const orderItem = await OrderItem.findByPk(songId, { include: [{ model: Order, as: 'order' }] });
+      if (orderItem && orderItem.order && orderItem.order.userId) ownerId = orderItem.order.userId;
     }
 
     if (ownerId !== userId) {

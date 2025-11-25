@@ -22,11 +22,12 @@ export const createSharedSong = async (req, res) => {
     let ownerId = null;
 
     if (song) {
-      const orderItem = await OrderItem.findByPk(song.orderItemId, { include: [Order] });
-      if (orderItem && orderItem.Order && orderItem.Order.userId) ownerId = orderItem.Order.userId;
+      // OrderItem belongsTo Order with alias 'order' -> include using as: 'order'
+      const orderItem = await OrderItem.findByPk(song.orderItemId, { include: [{ model: Order, as: 'order' }] });
+      if (orderItem && orderItem.order && orderItem.order.userId) ownerId = orderItem.order.userId;
     } else {
-      const orderItem = await OrderItem.findByPk(body.songId, { include: [Order] });
-      if (orderItem && orderItem.Order && orderItem.Order.userId) ownerId = orderItem.Order.userId;
+      const orderItem = await OrderItem.findByPk(body.songId, { include: [{ model: Order, as: 'order' }] });
+      if (orderItem && orderItem.order && orderItem.order.userId) ownerId = orderItem.order.userId;
     }
 
     if (ownerId !== userId) {
