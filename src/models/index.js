@@ -6,6 +6,8 @@ import { SongRequest } from "./songs.js";
 import { CartItem } from "./cart.js";
 import { Order, OrderItem } from "./orders.js";
 import { Song } from "./song.js";
+import { SongFeedback } from './songFeedback.js';
+import { SharedSong } from './sharedSong.js';
 
 // Relaciones
 User.hasMany(Payment, { foreignKey: "userId" });
@@ -32,6 +34,16 @@ OrderItem.hasMany(Song, { foreignKey: "orderItemId", as: "songs" });
 OrderItem.belongsTo(SongRequest, {foreignKey: "songRequestId",as: "songRequest",
 });
 
+// New models
+Song.hasMany(SongFeedback, { foreignKey: 'songId' });
+SongFeedback.belongsTo(Song, { foreignKey: 'songId' });
+
+User.hasMany(SharedSong, { foreignKey: 'userId' });
+SharedSong.belongsTo(User, { foreignKey: 'userId' });
+
+Song.hasMany(SharedSong, { foreignKey: 'songId' });
+SharedSong.belongsTo(Song, { foreignKey: 'songId' });
+
 // **IMPORTANTE** Exportar aquí todos los modelos ya “asociados”
 export {
   sequelize,
@@ -42,4 +54,6 @@ export {
   Order,
   OrderItem,
   Song,
+  SongFeedback,
+  SharedSong
 };

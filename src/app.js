@@ -7,6 +7,8 @@ import cartRoutes from './routes/cart.routes.js';
 import ordersRoutes from './routes/orders.routes.js';
 import songRouter from './routes/song.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
+import feedbackRoutes from './routes/feedback.routes.js';
+import sharedSongsRoutes from './routes/shared-songs.routes.js';
 import pricingRoutes from './routes/pricing.routes.js';
 import assetsRoutes from './routes/assets.routes.js';
 import { setupAuth } from './middleware/auth.js';
@@ -65,6 +67,8 @@ app.use('/orders', ordersRoutes)
 app.use('/song', songRouter)
 app.use('/pricing', pricingRoutes)
 app.use('/assets', assetsRoutes)
+app.use('/feedback', feedbackRoutes)
+app.use('/shared-songs', sharedSongsRoutes)
 
 app.use((err, req, res, next) => {
   console.error('Error global capturado:', err);

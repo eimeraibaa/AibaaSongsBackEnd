@@ -7,7 +7,9 @@
     "start": "node src/index.js",
     "migrate:sessions": "node scripts/migrate-sessions.js",
     "migrate:password-reset": "node scripts/add-password-reset-fields.js",
-    "migrate:railway": "node scripts/migrate-railway.js"
+    "migrate:railway": "node scripts/migrate-railway.js",
+    "smoke:feedback": "node scripts/smoke-test-feedback.js",
+    "migrate:new": "node scripts/run-new-migrations.js"
   },
   "keywords": [],
   "author": "",

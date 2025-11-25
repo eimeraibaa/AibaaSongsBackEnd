@@ -10,6 +10,8 @@ function validateEnvVariables() {
   const required = [
     'STRIPE_SECRET_KEY',
     'DATABASE_URL',
+    'SESSION_SECRET',
+    'BACKEND_URL'
   ];
 
   const missing = required.filter(key => !process.env[key]);

@@ -14,6 +14,13 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+// Ensure SESSION_SECRET is present at startup
+if (!process.env.SESSION_SECRET) {
+  console.error('\n\n❌ ERROR: Missing SESSION_SECRET environment variable.');
+  console.error('Set SESSION_SECRET in your .env (use a long random string).');
+  throw new Error('SESSION_SECRET is required');
+}
+
 // Función para verificar y recrear la tabla sessions si tiene estructura incorrecta
 async function ensureSessionsTable() {
   const client = await pool.connect();
