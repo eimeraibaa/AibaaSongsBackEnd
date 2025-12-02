@@ -472,7 +472,7 @@ class EmailService {
 
     // URL para ver todas las canciones
     const viewAllUrl = `${FRONTEND_URL}/history?token=${magicToken}`;
-    const surveyUrl = `${FRONTEND_URL}/survey/${orderId}?token=${magicToken}`;
+    const surveyUrl = `${FRONTEND_URL}/history?token=${magicToken}`;
 
     // Template completo optimizado para iOS
     return `
