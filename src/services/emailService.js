@@ -260,8 +260,14 @@ class EmailService {
       const downloadUrl = `${FRONTEND_URL}/history?token=${magicToken}&download=${song.id}`;
       const variationLabel = song.variation ? `V${song.variation}` : '';
 
+      // Add a gold border for V2 gift variations (to visually indicate a gift)
+      const isGoldV2 = (song.isGift === true || song.isGift === 'true') && Number(song.variation || 1) === 2;
+      const rowBorderStyle = isGoldV2
+        ? 'background-color: #fffef7; padding: 12px; margin: 8px 0; border-radius: 6px; border: 3px solid #D4AF37;'
+        : 'background-color: #ffffff; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #e0e0e0;';
+
       return `
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #e0e0e0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${rowBorderStyle}">
           <tr>
             <td>
               <p style="margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #555;">

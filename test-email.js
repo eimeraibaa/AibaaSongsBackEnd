@@ -111,6 +111,18 @@ async function testEmailService() {
       variation: 1,
       audioUrl: 'https://example.com/gift1.mp3'
     }
+    ,
+    // Regalo V2 (debe resaltarse con borde dorado)
+    {
+      id: 7,
+      title: 'Regalo Especial (V2) - Versión de regalo',
+      genre: 'acoustic',
+      language: 'es',
+      isGift: true,
+      orderItemId: 103,
+      variation: 2,
+      audioUrl: 'https://example.com/gift1-v2.mp3'
+    }
   ];
 
   console.log('📧 PRUEBA 1: Método sendEmail() - Email de canciones completadas');

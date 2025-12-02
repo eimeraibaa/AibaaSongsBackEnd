@@ -129,8 +129,14 @@ export class ResendEmailService {
           ${songGroup.length > 1 ? `
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 8px;">
               <small style="color: #888; display: block; margin-bottom: 8px;">🎵 ${songGroup.length} ${variationsLabel}:</small>
-              ${songGroup.map(song => `
-                <div style="margin: 6px 0; padding: 8px; background: white; border-radius: 4px;">
+              ${songGroup.map(song => {
+                const isGoldV2 = (song.isGift === true || song.isGift === 'true') && Number(song.variation || 1) === 2;
+                const tileStyle = isGoldV2
+                  ? 'margin: 6px 0; padding: 8px; background: #fffef7; border-radius: 4px; border: 2px solid #D4AF37;'
+                  : 'margin: 6px 0; padding: 8px; background: white; border-radius: 4px; border: 1px solid transparent;';
+
+                return `
+                <div style="${tileStyle}">
                   <strong style="color: #555; font-size: 14px;">${song.title}</strong><br>
                   ${song.audioUrl && song.id ? `
                     <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 12px; font-size: 13px;">🎵 ${listenLabel}</a>
@@ -139,7 +145,7 @@ export class ResendEmailService {
                     <span style="color: #999; font-size: 13px;">${processingLabel}</span>
                   `}
                 </div>
-              `).join('')}
+              `}).join('')}
             </div>
           ` : `
             ${baseSong.audioUrl && baseSong.id ? `
