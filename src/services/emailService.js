@@ -263,16 +263,20 @@ class EmailService {
       // Add a gold border for V2 gift variations (to visually indicate a gift)
       const isGoldV2 = (song.isGift === true || song.isGift === 'true') && Number(song.variation || 1) === 2;
       const rowBorderStyle = isGoldV2
-        ? 'background-color: #fffef7; padding: 12px; margin: 8px 0; border-radius: 6px; border: 3px solid #D4AF37;'
+        ? 'background-color: #fffef7; padding: 12px; margin: 8px 0; border-radius: 6px; border: 3px solid #D4AF37; box-shadow: 0 3px 10px rgba(212,175,55,0.12);'
         : 'background-color: #ffffff; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #e0e0e0;';
+
+      const badgeHtml = isGoldV2 ? `<div style="display:inline-block; font-size:11px; padding:6px 10px; background:#D4AF37; color:white; border-radius:14px; font-weight:700; margin-bottom:8px;">🎁 Regalo — V2</div>` : '';
 
       return `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${rowBorderStyle}">
           <tr>
             <td>
+              ${badgeHtml}
               <p style="margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #555;">
                 ${variationLabel ? `${variationLabel}: ` : ''}${song.title}
               </p>
+              ${song.imageUrl ? `<div style="margin-bottom:8px;"><img src="${song.imageUrl}" alt="${song.title}" width="220" style="display:block; border-radius:6px; width:100%; max-width:220px; height:auto; object-fit:cover; ${isGoldV2 ? 'border:3px solid #D4AF37;padding:3px;background:#fffef7;' : 'border:1px solid #eee;'}" /></div>` : ''}
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td style="padding-right: 10px;">
@@ -651,7 +655,7 @@ class EmailService {
                       ${texts.surveyTitle}
                     </h3>
                     <p style="margin: 0 0 20px 0; font-size: 14px; color: #666;">
-                      ${texts.surveyText} No te tomará más de un minuto.
+                      ${texts.surveyText}
                     </p>
                     <a href="${surveyUrl}"
                        target="_blank"

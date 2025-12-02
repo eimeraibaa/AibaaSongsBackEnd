@@ -132,11 +132,15 @@ export class ResendEmailService {
               ${songGroup.map(song => {
                 const isGoldV2 = (song.isGift === true || song.isGift === 'true') && Number(song.variation || 1) === 2;
                 const tileStyle = isGoldV2
-                  ? 'margin: 6px 0; padding: 8px; background: #fffef7; border-radius: 4px; border: 2px solid #D4AF37;'
-                  : 'margin: 6px 0; padding: 8px; background: white; border-radius: 4px; border: 1px solid transparent;';
+                  ? 'margin: 6px 0; padding: 8px; background: #fffef7; border-radius: 4px; border: 3px solid #D4AF37; box-shadow: 0 2px 6px rgba(212,175,55,0.15);'
+                  : 'margin: 6px 0; padding: 8px; background: white; border-radius: 4px; border: 1px solid #f4f4f4;';
+
+                // Badge para asegurar visibilidad en clientes que puedan ignorar bordes
+                const badge = isGoldV2 ? `<span style="display:inline-block; font-size:11px; padding:4px 8px; background:#D4AF37; color:white; border-radius:12px; font-weight:700; margin-right:8px;">🎁 Regalo — V2</span>` : '';
 
                 return `
                 <div style="${tileStyle}">
+                  ${badge}
                   <strong style="color: #555; font-size: 14px;">${song.title}</strong><br>
                   ${song.audioUrl && song.id ? `
                     <a href="${song.audioUrl}" target="_blank" style="color: #e69216; text-decoration: none; margin-right: 12px; font-size: 13px;">🎵 ${listenLabel}</a>

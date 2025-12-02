@@ -67,7 +67,8 @@ async function testEmailService() {
       isGift: false,
       orderItemId: 101,
       variation: 2,
-      audioUrl: 'https://example.com/song1-v2.mp3'
+      audioUrl: 'https://example.com/song1-v2.mp3',
+      imageUrl: 'https://placehold.co/600x400/png?text=Song1+V2'
     },
     {
       id: 3,
@@ -98,7 +99,8 @@ async function testEmailService() {
       isGift: false,
       orderItemId: 102,
       variation: 2,
-      audioUrl: 'https://example.com/song2-v2.mp3'
+      audioUrl: 'https://example.com/song2-v2.mp3',
+      imageUrl: 'https://placehold.co/600x400/png?text=Song2+V2'
     },
     // Regalo con 1 variación
     {
@@ -109,7 +111,8 @@ async function testEmailService() {
       isGift: true,
       orderItemId: 103,
       variation: 1,
-      audioUrl: 'https://example.com/gift1.mp3'
+      audioUrl: 'https://example.com/gift1.mp3',
+      imageUrl: 'https://placehold.co/600x400/png?text=Gift+V1'
     }
     ,
     // Regalo V2 (debe resaltarse con borde dorado)
@@ -121,7 +124,8 @@ async function testEmailService() {
       isGift: true,
       orderItemId: 103,
       variation: 2,
-      audioUrl: 'https://example.com/gift1-v2.mp3'
+      audioUrl: 'https://example.com/gift1-v2.mp3',
+      imageUrl: 'https://placehold.co/600x400/png?text=Gift+V2'
     }
   ];
 
