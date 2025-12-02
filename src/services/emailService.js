@@ -651,7 +651,7 @@ class EmailService {
                       ${texts.surveyTitle}
                     </h3>
                     <p style="margin: 0 0 20px 0; font-size: 14px; color: #666;">
-                      ${texts.surveyText}
+                      ${texts.surveyText} No te tomará más de un minuto.
                     </p>
                     <a href="${surveyUrl}"
                        target="_blank"
