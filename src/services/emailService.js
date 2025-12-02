@@ -30,8 +30,10 @@ class EmailService {
   constructor() {
     if (!RESEND_API_KEY) {
       console.warn('⚠️ RESEND_API_KEY no configurado');
+      this.resend = null;
+    } else {
+      this.resend = new Resend(RESEND_API_KEY);
     }
-    this.resend = new Resend(RESEND_API_KEY);
   }
 
   /**
@@ -186,8 +188,13 @@ class EmailService {
       const listenUrl = `${FRONTEND_URL}/history?token=${magicToken}&play=${song.id}`;
       const downloadUrl = `${FRONTEND_URL}/history?token=${magicToken}&download=${song.id}`;
 
-      return `
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; padding: 20px; margin: 0 0 20px 0; border: 1px solid #f0f0f0;">
+        const isGoldSingleV2 = Number(song.variation || 1) === 2;
+        const singleStyle = isGoldSingleV2
+          ? 'background-color: #fffef7; border-radius: 8px; padding: 20px; margin: 0 0 20px 0; border: 3px solid #D4AF37; box-shadow: 0 3px 12px rgba(212,175,55,0.12);'
+          : 'background-color: #ffffff; border-radius: 8px; padding: 20px; margin: 0 0 20px 0; border: 1px solid #f0f0f0;';
+
+        return `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${singleStyle}">
         <tr>
           <td>
             <!-- Título -->
@@ -260,8 +267,8 @@ class EmailService {
       const downloadUrl = `${FRONTEND_URL}/history?token=${magicToken}&download=${song.id}`;
       const variationLabel = song.variation ? `V${song.variation}` : '';
 
-      // Add a gold border for V2 gift variations (to visually indicate a gift)
-      const isGoldV2 = (song.isGift === true || song.isGift === 'true') && Number(song.variation || 1) === 2;
+      // Add a gold border for any V2 variation
+      const isGoldV2 = Number(song.variation || 1) === 2;
       const rowBorderStyle = isGoldV2
         ? 'background-color: #fffef7; padding: 12px; margin: 8px 0; border-radius: 6px; border: 3px solid #D4AF37; box-shadow: 0 3px 10px rgba(212,175,55,0.12);'
         : 'background-color: #ffffff; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #e0e0e0;';

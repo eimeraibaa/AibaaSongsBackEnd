@@ -130,7 +130,8 @@ export class ResendEmailService {
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 8px;">
               <small style="color: #888; display: block; margin-bottom: 8px;">🎵 ${songGroup.length} ${variationsLabel}:</small>
               ${songGroup.map(song => {
-                const isGoldV2 = (song.isGift === true || song.isGift === 'true') && Number(song.variation || 1) === 2;
+                // Mark gold for any V2 regardless of isGift
+                const isGoldV2 = Number(song.variation || 1) === 2;
                 const tileStyle = isGoldV2
                   ? 'margin: 6px 0; padding: 8px; background: #fffef7; border-radius: 4px; border: 3px solid #D4AF37; box-shadow: 0 2px 6px rgba(212,175,55,0.15);'
                   : 'margin: 6px 0; padding: 8px; background: white; border-radius: 4px; border: 1px solid #f4f4f4;';
